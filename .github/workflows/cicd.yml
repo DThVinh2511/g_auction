@@ -39,7 +39,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [git-runner]
 
     steps:
       - name: Checkout code
