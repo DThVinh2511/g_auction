@@ -34,7 +34,17 @@ public class SecurityConfig {
 	private  final String[] PUBLIC_PUT_ENDPOINTS =
 			{"v1/users/forget-password"};
 	private static final String[] PUBLIC_GET_ENDPOINTS = {"v1/products/**"};
-	
+
+	@Bean
+	public SecurityFilterChain publicFilterChain(HttpSecurity httpSecurity) throws Exception {
+		return httpSecurity
+				.securityMatcher("/swagger-ui/**", "/v3/api-docs/**")
+				.authorizeHttpRequests(req -> req.anyRequest().permitAll())
+				.csrf(AbstractHttpConfigurer::disable)
+				.cors(httpSecurityCorsConfigurer -> corsFilter())
+				.build();
+	}
+
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity
