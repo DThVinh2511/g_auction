@@ -45,23 +45,8 @@ jobs:
           echo "API_KEY=${{ secrets.API_KEY }}" >> .env
           echo "API_SECRET=${{ secrets.API_SECRET }}" >> .env
 
-      - name: Verify .env content
-        run: cat .env
-
       - name: Build Docker Compose images
         run: docker-compose build
-
-      - name: Start new containers
-        run: docker-compose up -d
-
-      - name: check variable docker-compose
-        run: docker-compose exec springboot env
-
-      - name: Show environment variables in Docker Compose
-        run: docker-compose config
-
-      - name: Start new containers
-        run: docker-compose down
 
       - name: Push Docker images to Docker Hub
         run: docker-compose push
@@ -82,6 +67,20 @@ jobs:
 
       - name: Stop and remove old containers
         run: docker-compose down
+
+      - name: Setup environment variables
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}" >> .env
+          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+          echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> .env
+          echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
+          echo "JWT_SIGNERKEY=${{ secrets.JWT_SIGNERKEY }}" >> .env
+          echo "JWT_VALID_DURATION=${{ secrets.JWT_VALID_DURATION }}" >> .env
+          echo "JWT_REFRESH=${{ secrets.JWT_REFRESH }}" >> .env
+          echo "CLOUD_NAME=${{ secrets.CLOUD_NAME }}" >> .env
+          echo "API_KEY=${{ secrets.API_KEY }}" >> .env
+          echo "API_SECRET=${{ secrets.API_SECRET }}" >> .env
 
       - name: Start new containers
         run: docker-compose up -d
