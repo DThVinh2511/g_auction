@@ -51,6 +51,9 @@ jobs:
       - name: Build Docker Compose images
         run: docker-compose build
 
+      - name: Show environment variables in Docker Compose
+        run: docker-compose config
+
       - name: Push Docker images to Docker Hub
         run: docker-compose push
 
