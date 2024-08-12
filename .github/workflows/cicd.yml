@@ -51,9 +51,6 @@ jobs:
       - name: Build Docker Compose images
         run: docker-compose build
 
-      - name: check variable docker-compose
-        run: docker-compose exec springboot env
-
       - name: Push Docker images to Docker Hub
         run: docker-compose push
 
@@ -76,6 +73,12 @@ jobs:
 
       - name: Start new containers
         run: docker-compose up -d
+
+      - name: check variable docker-compose
+        run: docker-compose exec springboot env
+
+      - name: Show environment variables in Docker Compose
+        run: docker-compose config
 
   show-logs:
     needs: deploy
