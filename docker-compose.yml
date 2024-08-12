@@ -16,7 +16,8 @@ services:
     environment:
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
-      - DATABASE_URL=${DATABASE_URL}
+#      - DATABASE_URL=${DATABASE_URL:abc}
+      - DATABASE_URL=jdbc:mysql://auction-db.cv0uw4swopxz.ap-southeast-1.rds.amazonaws.com/g_auction
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - MAIL_USERNAME=${MAIL_USERNAME}
