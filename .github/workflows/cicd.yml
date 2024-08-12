@@ -2,8 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - '*'  # Chạy workflow khi bất kỳ tag nào được tạo
 
 jobs:
   build:
@@ -56,3 +56,10 @@ jobs:
 
       - name: Start new containers
         run: docker-compose up -d
+
+  show-logs:
+    needs: deploy
+    runs-on: [git-runner]
+    steps:
+      - name: show spring boot logs
+        run: docker-compose logs -f springboot

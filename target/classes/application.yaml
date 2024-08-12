@@ -29,8 +29,8 @@ spring:
 #          writetimeout : 100
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
       ssl:
         enabled: true
   quartz:
@@ -47,9 +47,9 @@ spring:
 
 
 jwt:
-  signerKey: ${JWT_SIGNER_KEY:1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij}
-  valid-duration: ${JWT_VALID_DURATION:300}
-  refreshable-duration: ${JWT_REFRESH:3600}
+  signerKey: ${JWT_SIGNER_KEY:}
+  valid-duration: ${JWT_VALID_DURATION:}
+  refreshable-duration: ${JWT_REFRESH:}
 
 server:
   port: 8080
@@ -60,8 +60,8 @@ websocket:
   endpoint: /ws
 
 cloudinary:
-  name: ${CLOUD_NAME:dorl0yxpe}
-  key: ${API_KEY:999929732961462}
-  secret: ${API_SECRET:DDuOOlQ5ewAOkgRjR5E1GawxXqc}
+  name: ${CLOUD_NAME:abc}
+  key: ${API_KEY:9999}
+  secret: ${API_SECRET:DDuOOlQ5ewAOkgRjR5E1wxXqc}
 
 alloworigins: http://localhost:3000

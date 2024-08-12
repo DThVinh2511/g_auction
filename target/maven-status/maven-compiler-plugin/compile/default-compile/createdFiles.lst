@@ -6,6 +6,7 @@ com\ghtk\auction\dto\request\user\AuthenticationRequest.class
 com\ghtk\auction\dto\response\user\UserResponse.class
 com\ghtk\auction\dto\stomp\ControlMessage.class
 com\ghtk\auction\dto\request\user\AuthenticationRequest$AuthenticationRequestBuilder.class
+com\ghtk\auction\config\OpenApiConfig.class
 com\ghtk\auction\service\impl\EmailServiceImpl.class
 com\ghtk\auction\dto\stomp\CommentMessage$CommentMessageBuilder.class
 com\ghtk\auction\repository\BlackListTokenRepository.class
