@@ -4,6 +4,7 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    restart: unless-stopped
 
   springboot:
     build:
@@ -27,3 +28,4 @@ services:
       - CLOUD_NAME=${CLOUD_NAME}
       - API_KEY=${API_KEY}
       - API_SECRET=${API_SECRET}
+    restart: unless-stopped
