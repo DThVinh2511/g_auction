@@ -91,7 +91,7 @@ jobs:
         subject: 'CI/CD github'
         body: 'The pipeline has completed successfully.The project has been modified, please visit to update the latest code'
         to: 't.vinh25112003@gmail.com'
-        from: ${{ secrets.EMAIL_USERNAME }}
+        from: ${{ secrets.MAIL_USERNAME }}
   
   show-logs:
     needs: deploy
