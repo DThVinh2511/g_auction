@@ -64,4 +64,16 @@ cloudinary:
   key: ${API_KEY:9999}
   secret: ${API_SECRET:DDuOOlQ5ewAOkgRjR5E1wxXqc}
 
+springfox:
+  documentation:
+    swagger-ui:
+      base-url: /swagger-ui/
+      enabled: true
+    swagger:
+      enabled: true
+  resources:
+    static:
+      enabled: true
+
+
 alloworigins: http://localhost:3000
