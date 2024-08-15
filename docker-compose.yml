@@ -10,6 +10,7 @@ services:
     build:
       context: .  # Thư mục hiện tại (cùng cấp với Dockerfile)
     container_name: springboot
+    image: vinhdt77/auction-springboot:latest
     ports:
       - "8080:8080"
     depends_on:
