@@ -18,9 +18,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.List;
-import java.util.stream.Stream;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -36,18 +33,8 @@ public class SecurityConfig {
 					,"v1/auths/authenticate","v1/auths/introspect","v1/auths/logout","v1/auths/refresh"};
 	private  final String[] PUBLIC_PUT_ENDPOINTS =
 			{"v1/users/forget-password"};
-	private static final String[] PUBLIC_GET_ENDPOINTS = {"v1/products/**"};
-
-	@Bean
-	public SecurityFilterChain publicFilterChain(HttpSecurity httpSecurity) throws Exception {
-		return httpSecurity
-				.securityMatcher("/swagger-ui/**", "/v3/api-docs/**")
-				.authorizeHttpRequests(req -> req.anyRequest().permitAll())
-				.csrf(AbstractHttpConfigurer::disable)
-				.cors(httpSecurityCorsConfigurer -> corsFilter())
-				.build();
-	}
-
+	private static final String[] PUBLIC_GET_ENDPOINTS = {"v1/products/**", "v1/auctions/**"};
+	
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity
@@ -55,7 +42,7 @@ public class SecurityConfig {
 						req.requestMatchers(HttpMethod.POST , PUBLIC_POST_ENDPOINTS).permitAll()
 								.requestMatchers(HttpMethod.PUT , PUBLIC_PUT_ENDPOINTS).permitAll()
 								.requestMatchers(HttpMethod.GET , PUBLIC_GET_ENDPOINTS).permitAll()
-//								.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+								.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 								.anyRequest().authenticated()
 				);
 		httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
@@ -64,7 +51,6 @@ public class SecurityConfig {
 				.authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 		
 		httpSecurity.csrf(AbstractHttpConfigurer::disable);
-		httpSecurity.cors(httpSecurityCorsConfigurer -> corsFilter());
 		
 		return httpSecurity.build();
 	}
@@ -72,10 +58,11 @@ public class SecurityConfig {
 	@Bean
 	public CorsFilter corsFilter() {
 		CorsConfiguration corsConfiguration = new CorsConfiguration();
-		corsConfiguration.setAllowedOrigins(List.of("*"));
-		corsConfiguration.setAllowedHeaders(List.of("*"));
-		corsConfiguration.setAllowedMethods(Stream.of(HttpMethod.values()).map(HttpMethod::name).toList());
-
+		
+		corsConfiguration.addAllowedOrigin("*");
+		corsConfiguration.addAllowedMethod("*");
+		corsConfiguration.addAllowedHeader("*");
+		
 		UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
 		urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
 		

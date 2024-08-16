@@ -8,9 +8,12 @@ import com.ghtk.auction.repository.AuctionRepository;
 import com.ghtk.auction.repository.UserAuctionRepository;
 import com.ghtk.auction.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component("auctionComponent")
 @RequiredArgsConstructor
 public class AuctionComponent {
@@ -54,6 +57,8 @@ public class AuctionComponent {
     }
 
     public boolean canParticipateAuction(Long auctionId, Jwt principal) {
+        var iuv = authenticationComponent.isUserValid(principal);
+        log.error("isUserValid: " + iuv);
         if (!authenticationComponent.isUserValid(principal)) {
             return false;
         }
@@ -64,6 +69,10 @@ public class AuctionComponent {
         Auction auction = auctionRepository.findById(auctionId).orElseThrow(
               () -> new NotFoundException("Auction not found")
         );
+        var exists = userAuctionRepository.existsByUserAndAuction(user, auction);
+        var status = auction.getStatus();
+        log.error("exists: " + exists);
+        log.error("status: " + status);
         return auction.getStatus() == AuctionStatus.IN_PROGRESS 
             && userAuctionRepository.existsByUserAndAuction(user, auction);
     }

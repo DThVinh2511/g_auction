@@ -132,7 +132,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
               .subject(user.getEmail())
-              .issuer("auction")
+              .issuer("http://127.0.0.1:8080/auction")
               .issueTime(new Date())
               .claim("id", user.getId())
               .claim("scope", "ROLE_" + user.getRole())
@@ -157,7 +157,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSetRefresh = new JWTClaimsSet.Builder()
                 .subject(user.getEmail())
-                .issuer("auction")
+                .issuer("http://127.0.0.1:8080/auction")
                 .issueTime(new Date())
                 .claim("role", user.getRole())
                 .expirationTime(new Date(Instant.now().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli()

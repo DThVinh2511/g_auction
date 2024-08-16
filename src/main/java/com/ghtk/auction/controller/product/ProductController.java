@@ -6,8 +6,11 @@ import com.ghtk.auction.dto.request.product.ProductFilterRequest;
 import com.ghtk.auction.dto.response.ApiResponse;
 import com.ghtk.auction.dto.response.product.ProductDeletedResponse;
 import com.ghtk.auction.dto.response.product.ProductResponse;
+import com.ghtk.auction.dto.response.user.PageResponse;
+import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.Product;
 import com.ghtk.auction.service.ProductService;
+import com.ghtk.auction.utils.AppConstants;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -78,5 +81,14 @@ public class ProductController {
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<Product>> getProduct(@PathVariable Long id) {
 		return ResponseEntity.ok(ApiResponse.success(productService.getById(id)));
+	}
+
+	@GetMapping("/search")
+	public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> searchProduct(
+			@RequestParam(value = "key", required = false) String key,
+			@RequestParam(value = "page_no", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
+			@RequestParam(value = "page_size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize
+	){
+		return ResponseEntity.ok(ApiResponse.success(productService.searchProduct(key, pageNo, pageSize)));
 	}
 }

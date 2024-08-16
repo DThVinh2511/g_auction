@@ -16,7 +16,7 @@ import lombok.AccessLevel;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BidMessage {
+  Long userId;
   Long bid;
-
   LocalDateTime createdAt;
 }

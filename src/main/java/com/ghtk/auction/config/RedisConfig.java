@@ -1,8 +1,5 @@
 package com.ghtk.auction.config;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +8,11 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 
 @EnableRedisRepositories
@@ -37,13 +37,12 @@ public class RedisConfig {
 		template.setValueSerializer(new StringRedisSerializer());
 		return template;
 	}
-	
-	@Bean
-	public RedisTemplate<String, Object> redisObjectTemplate(RedisConnectionFactory connectionFactory) {
-		RedisTemplate<String, Object> template = new RedisTemplate<>();
-		template.setConnectionFactory(connectionFactory);
-		template.setKeySerializer(new StringRedisSerializer());
-		template.setValueSerializer(new StringRedisSerializer());
-		return template;
-	}
+
+  @Bean
+  public ObjectMapper objectMapper() {
+    return JsonMapper.builder()
+      .addModule(new JavaTimeModule())
+      .build();
+    
+  }
 }
