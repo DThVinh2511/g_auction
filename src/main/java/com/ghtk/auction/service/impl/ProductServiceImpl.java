@@ -3,6 +3,8 @@ package com.ghtk.auction.service.impl;
 import com.ghtk.auction.dto.request.product.ProductCreationRequest;
 import com.ghtk.auction.dto.request.product.ProductFilterRequest;
 import com.ghtk.auction.dto.response.product.ProductResponse;
+import com.ghtk.auction.dto.response.user.PageResponse;
+import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.Product;
 import com.ghtk.auction.entity.User;
 import com.ghtk.auction.entity.UserProduct;
@@ -16,6 +18,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -186,5 +192,32 @@ public class ProductServiceImpl implements ProductService {
 						.build()
 		).collect(Collectors.toList());
 		
+	}
+
+	@Override
+	public PageResponse<ProductResponse> searchProduct(String key, int pageNo, int pageSize) {
+		Pageable pageable= PageRequest.of(pageNo,pageSize);
+		List<Product> products = productRepository.findProductByName(key, pageable);
+//		Map<Long,String> ownerMap = new HashMap<>();
+//		products.forEach(product -> {
+//			if (!ownerMap.containsKey(product.getOwnerId())) {
+//				ownerMap.put(product.getOwnerId()
+//						,userRepository.findById(product.getOwnerId()).get().getFullName());
+//			}
+//		});
+		List<ProductResponse> productResponses = products.stream().map(
+				product -> ProductResponse.builder()
+						.owner(userRepository.findById(product.getOwnerId()).get().getFullName())
+						.name(product.getName())
+						.category(product.getCategory())
+						.description(product.getDescription())
+						.image(product.getImage())
+						.build()
+		).collect(Collectors.toList());
+		PageResponse<ProductResponse> pageAuctionResponse = new PageResponse<>();
+		pageAuctionResponse.setPageNo(pageNo);
+		pageAuctionResponse.setPageSize(pageSize);
+		pageAuctionResponse.setContent(productResponses);
+		return pageAuctionResponse;
 	}
 }

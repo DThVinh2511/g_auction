@@ -19,13 +19,15 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     
-    @Column(nullable = false, name = "content")
+    @Column(name = "content", nullable = false)
     String content;
     
-    @Column(nullable = false, name = "created_at")
+    @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
     
-    @ManyToOne
-    @JoinColumn(name = "user_auction_id")
-    UserAuction userAuctionId;
+    @Column(name = "auction_id", nullable = false)
+    Long auctionId;
+
+    @Column(name = "user_id", nullable = false)
+    Long userId;
 }

@@ -59,6 +59,9 @@ server:
 websocket:
   endpoint: /ws
 
+allowed-origins: >
+  *
+
 cloudinary:
   name: ${CLOUD_NAME:abc}
   key: ${API_KEY:9999}
@@ -74,6 +77,3 @@ springfox:
   resources:
     static:
       enabled: true
-
-
-alloworigins: http://localhost:3000
