@@ -8,6 +8,7 @@ import com.ghtk.auction.dto.response.auction.AuctionResponse;
 import com.ghtk.auction.dto.response.user.PageResponse;
 import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.UserAuction;
+import com.ghtk.auction.enums.AuctionStatus;
 import org.quartz.SchedulerException;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -26,9 +27,9 @@ public interface AuctionService {
 
     List<AuctionResponse> getRegisActiveAuctions(Jwt principal);
     // List<BidResponse> getBids(Jwt principal, Long auctionId, BidFilter filter);//
-    
+    public List<Auction> getMyRegisteredAuction(Jwt principal);
     // ADMIN
-    PageResponse<Auction> getAllList(int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponse<AuctionResponse> getAllList(int pageNo, int pageSize, String sortBy, String sortDir);
     
     // thay doi trang thai PENDING -> OPENING,
     // them fiels confirm_date, end_regis, start_time, end_time
@@ -36,4 +37,6 @@ public interface AuctionService {
     Auction confirmAuction(Long auctionId) throws SchedulerException;
     void updateStatus(AuctionUpdateStatusRequest request);
     void rejectAuction(Long auctionId);
+    PageResponse<AuctionResponse> getAllAuctionByStatus(AuctionStatus auctionStatus, int pageNo, int pageSize, String sortBy, String sortDir);
+    
 }

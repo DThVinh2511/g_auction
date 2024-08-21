@@ -20,4 +20,17 @@ public class ProductResponse {
 	String description;
 	
 	String image;
+	
+	Long productId;
+	
+	Long quantity;
+	
+//	public ProductResponse(String owner, String name, ProductCategory category, String description, String image, Long productId) {
+//		this.owner = owner;
+//		this.name = name;
+//		this.category = category;
+//		this.description = description;
+//		this.image = image;
+//		this.productId = productId;
+//	}
 }

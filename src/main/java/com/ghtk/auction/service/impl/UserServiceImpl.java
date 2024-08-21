@@ -167,6 +167,8 @@ public class UserServiceImpl implements UserService {
 //		log.info("claims: {}", claims);
 
 		User user = userRepository.findByEmail(email);
+		log.info("user: {}", user.getStatusAccount());
+		log.info("userResponse: {}", userMapper.toUserResponse(user));
 		return userMapper.toUserResponse(user);
 	}
 	
@@ -210,6 +212,7 @@ public class UserServiceImpl implements UserService {
 		User user = userRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException("User not found!"));
 		user.setStatusAccount(statusAccount);
+		userRepository.save(user);
 		return "update status account successfully!";
 	}
 	
@@ -253,6 +256,30 @@ public class UserServiceImpl implements UserService {
 				.gender(user.getGender())
 				.avatar(user.getAvatar())
 				.build();
+	}
+	
+	@Override
+	public PageResponse<UserResponse> getAllUserByStatus(UserStatus statusAccount, int pageNo, int pageSize, String sortBy, String sortDir) {
+		Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+				? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+		
+		Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+		
+		Page<User> users = userRepository.findAllByStatusAccount(pageable,statusAccount);
+		
+		List<User> listOfUser =users.getContent();
+		
+		List<UserResponse> content =listOfUser.stream().map(userMapper::toUserResponse).toList();
+		
+		PageResponse<UserResponse> pageUserResponse = new PageResponse<>();
+		pageUserResponse.setPageNo(pageNo);
+		pageUserResponse.setPageSize(pageSize);
+		pageUserResponse.setTotalPages(users.getTotalPages());
+		pageUserResponse.setTotalElements(users.getTotalElements());
+		pageUserResponse.setLast(users.isLast());
+		pageUserResponse.setContent(content);
+		
+		return pageUserResponse;
 	}
 	
 	private String generateOTP() {

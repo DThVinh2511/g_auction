@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface ImageService {
     String uploadImage(String name, MultipartFile file) throws IOException;
+
+    String normalizeImageUrls(String iamges);
+
+    String restoreImageUrls(String images);
 }

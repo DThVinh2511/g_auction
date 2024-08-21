@@ -82,11 +82,16 @@ public class AuctionServiceImpl implements AuctionService {
 						(Long)auction[1],
 						(String) auction[2],
 						(String) auction[3],
-						(Timestamp) auction[4],
-						(LocalDateTime) auction[5],
-						(LocalDateTime) auction[6],
-						(LocalDateTime) auction[7],
-						(LocalDateTime) auction[8],
+						convertToLocalDateTime((Timestamp) auction[4]),
+						convertToLocalDateTime((Timestamp) auction[5]),
+						convertToLocalDateTime((Timestamp) auction[6]),
+						convertToLocalDateTime((Timestamp) auction[7]),
+						convertToLocalDateTime((Timestamp) auction[8]),
+//						((Timestamp) auction[4]).toLocalDateTime(),
+//						((Timestamp) auction[5]).toLocalDateTime(),
+//						((Timestamp) auction[6]).toLocalDateTime(),
+//						((Timestamp) auction[7]).toLocalDateTime(),
+//						((Timestamp) auction[8]).toLocalDateTime(),
 						(Long) auction[9],
 						(Long) auction[10],
 						(Long) auction[11],
@@ -104,6 +109,19 @@ public class AuctionServiceImpl implements AuctionService {
 		);
 		auctionRepository.delete(auction);
 		return auction;
+	}
+	
+	@Override
+	public List<Auction> getMyRegisteredAuction(Jwt principal) {
+		Long userId = (Long)principal.getClaims().get("id");
+		User user = userRepository.findById(userId).orElseThrow(
+				() -> new NotFoundException("Khong thay nguoi dung")
+		);
+		List<UserAuction> results = userAuctionRepository.findAllByUser(user);
+		if (results.isEmpty()) {
+			throw new NotFoundException("Nguoi dung chua dang ky tham gia bat ky phien nao!");
+		}
+		return results.stream().map(UserAuction::getAuction).toList();
 	}
 	
 	// TODO : meo hieu doan nay the nao nua ??
@@ -125,7 +143,7 @@ public class AuctionServiceImpl implements AuctionService {
 		
 		results.forEach(
 				result -> {
-					if(timeHistoryRepository.existsByUserAuctionId(result))
+					if(timeHistoryRepository.existsByUserAuction(result))
 					{
 						myJoined.add(result);
 					}
@@ -204,7 +222,7 @@ public class AuctionServiceImpl implements AuctionService {
 	
 	// ADMIN
 	@Override
-	public PageResponse<Auction> getAllList(int pageNo, int pageSize, String sortBy, String sortDir) {
+	public PageResponse<AuctionResponse> getAllList(int pageNo, int pageSize, String sortBy, String sortDir) {
     // TODO:
 		Sort sort =sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
 				? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
@@ -214,13 +232,16 @@ public class AuctionServiceImpl implements AuctionService {
 		Page<Auction> auctions =auctionRepository.findAll(pageable);
 
 		List<Auction> listOfAuction =auctions.getContent();
-		PageResponse<Auction> pageAuctionResponse = new PageResponse<>();
+		
+		List<AuctionResponse> content =listOfAuction.stream().map(auctionMapper::toAuctionResponse).toList();
+		
+		PageResponse<AuctionResponse> pageAuctionResponse = new PageResponse<>();
 		pageAuctionResponse.setPageNo(pageNo);
 		pageAuctionResponse.setPageSize(pageSize);
 		pageAuctionResponse.setTotalPages(auctions.getTotalPages());
 		pageAuctionResponse.setTotalElements(auctions.getTotalElements());
 		pageAuctionResponse.setLast(auctions.isLast());
-		pageAuctionResponse.setContent(listOfAuction);
+		pageAuctionResponse.setContent(content);
 		return pageAuctionResponse;
 	}
 	
@@ -282,5 +303,34 @@ public class AuctionServiceImpl implements AuctionService {
 		);
 		auctionRepository.deleteById(auctionId);
 	}
+	
+	@Override
+	public PageResponse<AuctionResponse> getAllAuctionByStatus(AuctionStatus auctionStatus, int pageNo, int pageSize, String sortBy, String sortDir) {
+		Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+				? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+		
+		Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+		
+		Page<Auction> auctions = auctionRepository.findAllByStatus(auctionStatus,pageable);
+		
+		List<Auction> auctionList =auctions.getContent();
+		
+		List<AuctionResponse> content =auctionList.stream().map(auctionMapper::toAuctionResponse).toList();
+		
+		PageResponse<AuctionResponse> pageAuctionResponse = new PageResponse<>();
+		pageAuctionResponse.setPageNo(pageNo);
+		pageAuctionResponse.setPageSize(pageSize);
+		pageAuctionResponse.setTotalPages(auctions.getTotalPages());
+		pageAuctionResponse.setTotalElements(auctions.getTotalElements());
+		pageAuctionResponse.setLast(auctions.isLast());
+		pageAuctionResponse.setContent(content);
+		
+		return pageAuctionResponse;
+	}
+	
+	private LocalDateTime convertToLocalDateTime(Timestamp timestamp) {
+		return timestamp!=null ? timestamp.toLocalDateTime() : null;
+	}
+	
 	
 }

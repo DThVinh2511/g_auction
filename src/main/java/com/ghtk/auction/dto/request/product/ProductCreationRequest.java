@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.ghtk.auction.enums.ProductCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,7 +20,7 @@ public class ProductCreationRequest {
 	@NotBlank
 	String name;
 	
-	@NotEmpty
+	@NotNull
 	ProductCategory category;
 	
 	@NotEmpty

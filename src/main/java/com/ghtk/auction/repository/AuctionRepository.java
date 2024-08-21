@@ -2,6 +2,9 @@ package com.ghtk.auction.repository;
 
 import com.ghtk.auction.dto.response.auction.AuctionResponse;
 import com.ghtk.auction.entity.Auction;
+import com.ghtk.auction.enums.AuctionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,4 +38,5 @@ public interface AuctionRepository extends JpaRepository<Auction,Long> {
 	       p.owner_id = :ownerId""", nativeQuery = true)
 	List<Object[]> findMyByProductOwnerId(@Param("ownerId") Long ownerId);
 	
+	Page<Auction> findAllByStatus(AuctionStatus status, Pageable pageable);
 }

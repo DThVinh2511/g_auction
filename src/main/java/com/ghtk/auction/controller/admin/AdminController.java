@@ -66,7 +66,7 @@ public class AdminController {
   @PostMapping("/notify")
   public ApiResponse<Void> publishNotification(@RequestBody String message) {
     stompService.sendGlobalNotification(new NotifyMessage(message, LocalDateTime.now()));
-    return ApiResponse.success("ok");
+    return ApiResponse.ok("ok");
   }
 
   @PostMapping("/auctions/{auctionId}/notify")
@@ -74,6 +74,6 @@ public class AdminController {
     @RequestBody String message,
     @PathVariable Long auctionId) {
     stompService.sendGlobalNotification(new NotifyMessage(message, LocalDateTime.now()));
-    return ApiResponse.success("ok");
+    return ApiResponse.ok("ok");
   }
 }

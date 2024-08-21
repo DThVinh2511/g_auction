@@ -1,5 +1,6 @@
 package com.ghtk.auction.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.ghtk.auction.enums.AuctionStatus;
 import jakarta.persistence.*;
@@ -29,18 +30,23 @@ public class Auction {
 	String description;
 	
 	@Column(nullable = false, name = "created_at")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	LocalDateTime createdAt; // ngay nguoi ban tao
 	
 	@Column(nullable = false, name = "confirm_date")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	LocalDateTime confirmDate; // ngay mo dang ky
 	
 	@Column(nullable = false, name = "end_registration")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	LocalDateTime endRegistration; // ngay dong dang ky
 
 	@Column(nullable = false, name = "start_time")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	LocalDateTime startTime; // ngay bat dau phien dau gia
 
 	@Column(nullable = false, name = "end_time")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	LocalDateTime endTime;
 
 	@Column(nullable = false, name = "start_bid")

@@ -64,7 +64,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
       registry.addEndpoint(stompEndpoint)
               .setAllowedOrigins(allowedOrigins)
               // .setHandshakeHandler(customHandshakeHandler)
-              .addInterceptors(applicationContext.getBean(CustomHandshakeInterceptor.class));;
+              .addInterceptors(applicationContext.getBean(ProtocolJwtHandshakeInterceptor.class));
       registry.setErrorHandler(applicationContext.getBean(StompSubProtocolExceptionHandler.class));
     }
 

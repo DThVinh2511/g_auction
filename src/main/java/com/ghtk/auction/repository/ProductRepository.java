@@ -23,12 +23,13 @@ public interface ProductRepository extends JpaRepository<Product,Long>, ProductR
            p.category AS category,
            p.description AS description,
            p.image AS image,
-           u2.full_name AS buyer
+           u2.full_name AS buyer,
+           p.id AS productId
        FROM
            product p
-       JOIN USER u ON
+       JOIN `user` u ON
            p.owner_id = u.id
-       LEFT JOIN USER u2 ON
+       LEFT JOIN `user` u2 ON
            p.buyer_id = u2.id
        WHERE
            u.id = :o 	""", nativeQuery = true)
@@ -41,4 +42,6 @@ public interface ProductRepository extends JpaRepository<Product,Long>, ProductR
 	Page<Product> findAllByNameStartingWith(Pageable pageable, String name);
 	@Query("SELECT p FROM Product p WHERE p.name LIKE %:name%")
 	Page<Product> searchProduct(Pageable pageable, String name);
+	
+	Page<Product> findAllByCategory(ProductCategory category,Pageable pageable);
 }

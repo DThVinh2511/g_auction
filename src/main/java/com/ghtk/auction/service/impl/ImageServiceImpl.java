@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,5 +24,27 @@ public class ImageServiceImpl implements ImageService {
         } catch (IOException e) {
             throw new UploadException(e.getMessage());
         }
+    }
+
+    @Override
+    public String normalizeImageUrls(String iamges) {
+        String marker = "image/upload/"; // Phần cố định để bắt đầu lấy chuỗi
+        return Arrays.stream(iamges.split(","))
+                .map(String::trim)
+                .map(url -> {
+                    int startIndex = url.indexOf(marker);
+                    return startIndex != -1 ? url.substring(startIndex + marker.length()) : url;
+                })
+                .collect(Collectors.joining(", "));
+    }
+
+    @Override
+    public String restoreImageUrls(String images) {
+        String baseUrl = "https://res.cloudinary.com/ddqaug6dy/image/upload/";
+
+        return Arrays.stream(images.split(","))
+                .map(String::trim)
+                .map(url -> baseUrl + url)
+                .collect(Collectors.joining(", "));
     }
 }

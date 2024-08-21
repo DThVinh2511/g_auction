@@ -14,7 +14,7 @@ import java.util.List;
 public interface TimeHistoryRepository extends JpaRepository<TimeHistory,Long> {
 	
 	
-	boolean existsByUserAuctionId(UserAuction userAuction);
+	boolean existsByUserAuction(UserAuction userAuction);
 	
 	
 }
