@@ -18,7 +18,6 @@ import java.time.LocalDate;
 public class UserResponse {
 	
 	String email;
-	String password;
 	Boolean isVerified;
 	String fullName;
 	

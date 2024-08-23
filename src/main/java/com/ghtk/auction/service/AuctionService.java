@@ -4,6 +4,7 @@ package com.ghtk.auction.service;
 import com.ghtk.auction.dto.request.auction.AuctionCreationRequest;
 import com.ghtk.auction.dto.request.auction.AuctionUpdateStatusRequest;
 import com.ghtk.auction.dto.response.auction.AuctionCreationResponse;
+import com.ghtk.auction.dto.response.auction.AuctionListResponse;
 import com.ghtk.auction.dto.response.auction.AuctionResponse;
 import com.ghtk.auction.dto.response.user.PageResponse;
 import com.ghtk.auction.entity.Auction;
@@ -23,13 +24,13 @@ public interface AuctionService {
     Auction getAuctionById(Long auctionId);
 
     List<Auction> getMyJoinedAuction(Jwt principal);
-    UserAuction registerJoinAuction(Jwt principal, Long auctionId);
+    String registerJoinAuction(Jwt principal, Long auctionId);
 
     List<AuctionResponse> getRegisActiveAuctions(Jwt principal);
     // List<BidResponse> getBids(Jwt principal, Long auctionId, BidFilter filter);//
     public List<Auction> getMyRegisteredAuction(Jwt principal);
     // ADMIN
-    PageResponse<AuctionResponse> getAllList(int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponse<AuctionListResponse> getAllList(int pageNo, int pageSize);
     
     // thay doi trang thai PENDING -> OPENING,
     // them fiels confirm_date, end_regis, start_time, end_time
@@ -37,6 +38,6 @@ public interface AuctionService {
     Auction confirmAuction(Long auctionId) throws SchedulerException;
     void updateStatus(AuctionUpdateStatusRequest request);
     void rejectAuction(Long auctionId);
-    PageResponse<AuctionResponse> getAllAuctionByStatus(AuctionStatus auctionStatus, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponse<AuctionListResponse> getAllAuctionByStatus(AuctionStatus auctionStatus, int pageNo, int pageSize);
     
 }

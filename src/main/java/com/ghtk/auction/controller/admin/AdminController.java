@@ -39,7 +39,6 @@ public class AdminController {
   public ApiResponse<Void> openAuction(
       @PathVariable Long auctionId
   ) {
-    auctionService.updateStatus(new AuctionUpdateStatusRequest(auctionId, AuctionStatus.CLOSED));
     auctionRealtimeService.openAuctionRoom(auctionId);
     return ApiResponse.success(null);
   }

@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 import com.ghtk.auction.dto.response.ApiResponse;
 import com.ghtk.auction.dto.stomp.BidMessage;
 import com.ghtk.auction.dto.stomp.CommentMessage;
-import com.ghtk.auction.repository.Custom.AuctionSessionRepository;
+import com.ghtk.auction.entity.Auction;
+import com.ghtk.auction.entity.UserAuction;
+import com.ghtk.auction.repository.AuctionRepository;
+import com.ghtk.auction.repository.UserAuctionRepository;
 import com.ghtk.auction.service.StompService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +22,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuctionEventStompListener {
   private final StompService stompService;
-  private final AuctionSessionRepository auctionSessionRepository;
+  private final AuctionRepository auctionRepository;
+  private final UserAuctionRepository userAuctionRepository;
 
   @Async
   @EventListener
@@ -52,9 +56,10 @@ public class AuctionEventStompListener {
   @EventListener
   public void handleAuctionRoomOpenEvent(AuctionRoomOpenEvent event) {
     System.out.println("listen auction room open event");
-    Long auctionId = event.getAuctionId();
-    List<Long> userIds = auctionSessionRepository.getJoinableByAuction(auctionId);
-    userIds.stream().forEach(userId -> {
+    Auction auction = auctionRepository.findById(event.getAuctionId()).get();
+    List<UserAuction> uas = userAuctionRepository.findAllByAuction(auction);
+    uas.stream().forEach(ua -> {
+      long userId = ua.getUser().getId();
       System.out.println(userId);
       stompService.notifyJoinableAuction(userId, event.getAuctionId());
     });

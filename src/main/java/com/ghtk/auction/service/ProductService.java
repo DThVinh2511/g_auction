@@ -4,11 +4,10 @@ package com.ghtk.auction.service;
 import com.ghtk.auction.dto.request.product.ProductCreationRequest;
 import com.ghtk.auction.dto.request.product.ProductFilterRequest;
 import com.ghtk.auction.dto.response.product.ProductResponse;
-import com.ghtk.auction.dto.response.product.ProductSearchResponse;
+import com.ghtk.auction.dto.response.product.ProductListResponse;
 import com.ghtk.auction.dto.response.user.PageResponse;
 import com.ghtk.auction.entity.Product;
 import com.ghtk.auction.enums.ProductCategory;
-import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
@@ -17,7 +16,7 @@ public interface ProductService {
 	
 	Product createProduct(ProductCreationRequest request);
 	
-	List<ProductResponse> getAllMyProduct();
+	List<ProductResponse> getAllMyProduct(int pageNo, int pageSize);
 	
 	Product getById(Long id);
 	
@@ -34,11 +33,11 @@ public interface ProductService {
 	
 	List<ProductResponse> searchProductbyCategory(ProductFilterRequest request);
 
-	PageResponse<ProductSearchResponse> searchProduct(String key, int pageNo, int pageSize);
+	PageResponse<ProductListResponse> searchProduct(String key, int pageNo, int pageSize);
 
-	List<ProductResponse> getTop5MostPopularProducts();
+	List<ProductResponse> getTopMostPopularProducts(Long limit);
 	
-	PageResponse<ProductResponse> getAllProductByCategory(ProductCategory category, int pageNo, int pageSize, String sortBy, String sortDir);
+	PageResponse<ProductResponse> getAllProductByCategory(ProductCategory category, int pageNo, int pageSize);
 	
-	PageResponse<ProductResponse> getAllProduct(int pageNo, int pageSize, String sortBy, String sortDir);
+	PageResponse<ProductResponse> getAllProduct(int pageNo, int pageSize);
 }

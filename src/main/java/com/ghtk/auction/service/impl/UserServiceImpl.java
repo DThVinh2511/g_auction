@@ -79,7 +79,6 @@ public class UserServiceImpl implements UserService {
 		
 		return UserResponse.builder()
 				.email(request.getEmail())
-				.password(request.getPassword())
 				.isVerified(false)
 				.build();
 	}
@@ -259,24 +258,17 @@ public class UserServiceImpl implements UserService {
 	}
 	
 	@Override
-	public PageResponse<UserResponse> getAllUserByStatus(UserStatus statusAccount, int pageNo, int pageSize, String sortBy, String sortDir) {
-		Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-				? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+	public PageResponse<UserResponse> getAllUserByStatus(UserStatus statusAccount, int pageNo, int pageSize) {
+		Pageable pageable = PageRequest.of(pageNo,pageSize);
 		
-		Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+		Long total = userRepository.countByStatusAccount(statusAccount);
 		
-		Page<User> users = userRepository.findAllByStatusAccount(pageable,statusAccount);
-		
-		List<User> listOfUser =users.getContent();
-		
-		List<UserResponse> content =listOfUser.stream().map(userMapper::toUserResponse).toList();
-		
+		List<UserResponse> content = userRepository.findUsersAll(pageable, statusAccount);
 		PageResponse<UserResponse> pageUserResponse = new PageResponse<>();
 		pageUserResponse.setPageNo(pageNo);
 		pageUserResponse.setPageSize(pageSize);
-		pageUserResponse.setTotalPages(users.getTotalPages());
-		pageUserResponse.setTotalElements(users.getTotalElements());
-		pageUserResponse.setLast(users.isLast());
+		pageUserResponse.setTotalElements(total);
+		pageUserResponse.setLast(true);
 		pageUserResponse.setContent(content);
 		
 		return pageUserResponse;

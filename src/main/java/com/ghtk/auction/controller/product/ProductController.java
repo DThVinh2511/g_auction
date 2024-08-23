@@ -6,9 +6,8 @@ import com.ghtk.auction.dto.request.product.ProductFilterRequest;
 import com.ghtk.auction.dto.response.ApiResponse;
 import com.ghtk.auction.dto.response.product.ProductDeletedResponse;
 import com.ghtk.auction.dto.response.product.ProductResponse;
-import com.ghtk.auction.dto.response.product.ProductSearchResponse;
+import com.ghtk.auction.dto.response.product.ProductListResponse;
 import com.ghtk.auction.dto.response.user.PageResponse;
-import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.Product;
 import com.ghtk.auction.enums.ProductCategory;
 import com.ghtk.auction.service.ProductService;
@@ -39,8 +38,11 @@ public class ProductController {
 	}
 	
 	@GetMapping("/get-my-all")
-	public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll() {
-		return ResponseEntity.ok(ApiResponse.success(productService.getAllMyProduct()));
+	public ResponseEntity<ApiResponse<List<ProductResponse>>> getAll(
+			@RequestParam(value = "page_no", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
+			@RequestParam(value = "page_size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize
+	) {
+		return ResponseEntity.ok(ApiResponse.success(productService.getAllMyProduct(pageNo, pageSize)));
 	}
 	
 	@GetMapping("/get-my-by-category")
@@ -86,12 +88,14 @@ public class ProductController {
 	}
 	
 	@GetMapping("/top-popular")
-	public ResponseEntity<ApiResponse<List<ProductResponse>>> getTop5MostPopularProducts() {
-		return ResponseEntity.ok(ApiResponse.success(productService.getTop5MostPopularProducts()));
+	public ResponseEntity<ApiResponse<List<ProductResponse>>> getTop5MostPopularProducts(
+			@RequestParam(value = "limit", defaultValue = AppConstants.DEFAULT_LIMIT, required = false) Long limit
+	) {
+		return ResponseEntity.ok(ApiResponse.success(productService.getTopMostPopularProducts(limit)));
 	}
 	
 	@GetMapping("/search")
-	public ResponseEntity<ApiResponse<PageResponse<ProductSearchResponse>>> searchProduct(
+	public ResponseEntity<ApiResponse<PageResponse<ProductListResponse>>> searchProduct(
 			@RequestParam(value = "key", required = false) String key,
 			@RequestParam(value = "page_no", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
 			@RequestParam(value = "page_size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize
@@ -103,20 +107,16 @@ public class ProductController {
 	public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getProductsByCategory(
 			@RequestParam(value = "pageNo", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
 			@RequestParam(value = "pageSize", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize,
-			@RequestParam(value = "sortBy", defaultValue = "name", required = false) String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = AppConstants.DEFAULT_SORT_DIRECTION, required = false) String sortDir,
 			@RequestParam(value = "category") ProductCategory category
 	) {
-		return ResponseEntity.ok(ApiResponse.success(productService.getAllProductByCategory(category, pageNo, pageSize, sortBy, sortDir)));
+		return ResponseEntity.ok(ApiResponse.success(productService.getAllProductByCategory(category, pageNo, pageSize)));
 	}
 	
 	@GetMapping("/get-all-product")
 	public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getAllProduct(
 			@RequestParam(value = "pageNo", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
-			@RequestParam(value = "pageSize", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize,
-			@RequestParam(value = "sortBy", defaultValue = "name", required = false) String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = AppConstants.DEFAULT_SORT_DIRECTION, required = false) String sortDir
+			@RequestParam(value = "pageSize", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize
 	) {
-		return ResponseEntity.ok(ApiResponse.success(productService.getAllProduct(pageNo, pageSize, sortBy, sortDir)));
+		return ResponseEntity.ok(ApiResponse.success(productService.getAllProduct(pageNo, pageSize)));
 	}
 }

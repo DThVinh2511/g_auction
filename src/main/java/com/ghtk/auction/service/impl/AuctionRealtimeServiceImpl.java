@@ -1,15 +1,17 @@
 package com.ghtk.auction.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import com.ghtk.auction.component.RedisTemplateFactory;
 import com.ghtk.auction.dto.redis.AuctionBid;
-import com.ghtk.auction.dto.redis.AuctionRoom;
+import com.ghtk.auction.dto.redis.AuctionRedisResponse;
 import com.ghtk.auction.dto.request.comment.CommentFilter;
 import com.ghtk.auction.dto.response.auction.AuctionJoinResponse;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.util.Pair;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.ghtk.auction.dto.stomp.BidMessage;
@@ -36,7 +38,6 @@ import com.ghtk.auction.repository.TimeHistoryRepository;
 import com.ghtk.auction.repository.UserAuctionHistoryRepository;
 import com.ghtk.auction.repository.UserAuctionRepository;
 import com.ghtk.auction.repository.UserRepository;
-import com.ghtk.auction.repository.Custom.AuctionSessionRepository;
 import com.ghtk.auction.service.AuctionRealtimeService;
 
 import jakarta.validation.ValidationException;
@@ -58,13 +59,14 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
   final UserAuctionHistoryRepository userAuctionHistoryRepository;
   final CommentRepository commentRepository;
 
-  final AuctionSessionRepository auctionSessionRepository;
+  final RedisTemplate<String, String> redisTemplate;
+  final RedisTemplateFactory redisTemplateFactory;
 
   final ApplicationEventPublisher eventPublisher;
   
   @Override
   public List<Auction> getJoinableNotis(Long userId) {
-    return auctionSessionRepository.getJoinableByUser(userId).stream()
+    return getUserAuctions(userId).stream()
         .map(auctionId -> auctionRepository.findById(auctionId).orElseThrow(
             () -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
         ))
@@ -73,160 +75,146 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
 
   @Override
   public void checkControlJoin(Long userId, Long auctionId) {
-    if (auctionSessionRepository.getAuctionRoom(auctionId).isEmpty()) {
+    if (!isAuctionRoomOpen(auctionId)) {
       throw new ForbiddenException("phong dau gia chua mo");
     }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+    if (!canUserJoinAuction(userId, auctionId)) {
       throw new ForbiddenException("Khong co quyen tham gia dau gia");
     }
   }
 
   @Override
   public void checkNotifJoin(Long userId, Long auctionId) {
-    if (auctionSessionRepository.getAuctionRoom(auctionId).isEmpty()) {
+    if (!isAuctionRoomOpen(auctionId)) {
       throw new ForbiddenException("phong dau gia chua mo");
     }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+    if (!canUserJoinAuction(userId, auctionId)) {
       throw new ForbiddenException("Khong co quyen tham gia dau gia");
     }
   }
   
   @Override
   public void checkBidJoin(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
+    if (!isAuctionActive(auctionId)) {
       throw new ForbiddenException("dau gia chua bat dau");
     }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+    if (!canUserJoinAuction(userId, auctionId)) {
       throw new ForbiddenException("Khong co quyen tham gia dau gia");
     }
   }
   
   @Override
   public void checkCommentJoin(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
-      throw new ForbiddenException("dau gia chua bat day");
+    if (!isAuctionActive(auctionId)) {
+      throw new ForbiddenException("dau gia chua bat dau");
     }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+    if (!canUserJoinAuction(userId, auctionId)) {
       throw new ForbiddenException("Khong co quyen tham gia dau gia");
     }
   }
 
 	@Override
 	public AuctionJoinResponse joinAuction(Long userId, Long auctionId) {
-    AuctionRoom room = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
-        () -> new NotFoundException("phong dau gia chua mo")
-    );
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+    if (!isAuctionRoomOpen(auctionId)) {
+      throw new ForbiddenException("phong dau gia chua mo");
+    }
+    if (!canUserJoinAuction(userId, auctionId)) {
       throw new ForbiddenException("Khong co quyen tham gia dau gia");
     }
-    if (auctionSessionRepository.getJoin(auctionId, userId).isPresent()) {
+    if (!getUserLastJoinAuction(userId, auctionId).isEmpty()) {
       throw new AlreadyExistsException("da tham gia dau gia");
     }
-    auctionSessionRepository.addJoin(auctionId, userId);
-    return new AuctionJoinResponse(room.isStarted());
+    LocalDateTime joinTime = LocalDateTime.now();
+    setUserLastJoinAuction(userId, auctionId, joinTime);
+    return new AuctionJoinResponse(isAuctionActive(auctionId));
 	}
 
   @Override
   public void leaveAuction(Long userId, Long auctionId) {
     UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
-    LocalDateTime joinTime = auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(
+    LocalDateTime joinTime = getUserLastJoinAuction(userId, auctionId).orElseThrow(
         () -> new ForbiddenException("Chua tham gia dau gia")
     );
     LocalDateTime leaveTime = LocalDateTime.now();
-    auctionSessionRepository.deleteJoin(auctionId, userId);
     TimeHistory entry = TimeHistory.builder()
         .userAuction(ua)
         .joinTime(joinTime)
         .outTime(leaveTime)
         .build();
     timeHistoryRepository.save(entry);
-  }
-
-  @Override
-  public void leaveAllAuctions(Long userId) {
-    LocalDateTime leaveTime = LocalDateTime.now();
-
-    List<Pair<Long, LocalDateTime>> joins = auctionSessionRepository.getJoinsByUser(userId);
-    auctionSessionRepository.deleteAllJoinByUser(userId);
-
-    List<TimeHistory> entries = new ArrayList<>();
-    joins.forEach(pair -> {
-      try {
-        Long auctionId = pair.getFirst();
-        LocalDateTime joinTime = pair.getSecond();
-        UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
-        TimeHistory entry = TimeHistory.builder()
-            .userAuction(ua)
-            .joinTime(joinTime)
-            .outTime(leaveTime)
-            .build();
-        entries.add(entry);
-      } catch (Exception e) {
-        log.error("Loi khi roi phien dau gia", e);
-      }
-    });
-    timeHistoryRepository.saveAll(entries);
+    deleteUserLastJoinAuction(userId, auctionId);
   }
 
   @Override
   public void checkBidding(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
+    if (!isAuctionActive(auctionId)) {
       throw new ForbiddenException("Phien dau gia chua bat dau");
     }
-    auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(() ->
+    getUserLastJoinAuction(userId, auctionId).orElseThrow(() ->
         new ForbiddenException("Chua tham gia dau gia")
     );
   }
 
   @Override
   public void checkCommenting(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
-        throw new ForbiddenException("Phien dau gia chua bat dau");
+    if (!isAuctionActive(auctionId)) {
+      throw new ForbiddenException("Phien dau gia chua bat dau");
     }
-    auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(() ->
+    getUserLastJoinAuction(userId, auctionId).orElseThrow(() ->
         new ForbiddenException("Chua tham gia dau gia")
     );
   }
 
   @Override
   public void checkNotifying(Long userId, Long auctionId) {
-    
+    AuctionRedisResponse info = getAuctionRoom(auctionId).orElseThrow(
+        () -> new NotFoundException("Khong tim thay phien dau gia")
+    );
+    if (info.getOwnerId() != userId) {
+      throw new ForbiddenException("Khong co quyen thong bao");
+    }
   }
 
   @Override
   public BidMessage getCurrentPrice(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
+    if (!isAuctionActive(auctionId)) {
       throw new ForbiddenException("Phien dau gia chua bat dau");
     }
-    BidMessage result = auctionSessionRepository.getLastBid(auctionId)
-        .orElseGet(() -> {
-            return new BidMessage(0L, 0L, null);
-        });
+    BidMessage result = getAuctionLastPrice(auctionId).get();
     return result;
   }
 
   @Override
   public List<CommentMessage> getComments(Long userId, Long auctionId, CommentFilter filter) {
-    if (!isAuctionStarted(auctionId)) {
+    if (!isAuctionActive(auctionId)) {
       throw new ForbiddenException("Phien dau gia chua bat dau");
     }
-    return auctionSessionRepository.getComments(auctionId, filter);
+    var queryResult = (filter.getFrom() == null) 
+        ? commentRepository.findAllByAuctionId(auctionId)
+        : commentRepository.findAllByAuctionIdAndCreatedAtAfter(auctionId, filter.getFrom());
+    return queryResult.stream()
+        .map(comment -> new CommentMessage(
+            comment.getId(),
+            comment.getUserId(),
+            comment.getContent(), 
+            comment.getCreatedAt() 
+        ))
+        .toList();
   }
 	
 	@Override
 	public synchronized BidMessage bid(Long userId, Long auctionId, Long bid) {
-    AuctionRoom info = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
-        () -> new ForbiddenException("Phien dau gia chua bat dau")
-    );
-    if (!isAuctionStarted(auctionId)) {
+    if (!isAuctionActive(auctionId)) {
       throw new ForbiddenException("Phien dau gia chua bat dau");
     }
     if (bid == null || bid <= 0) {
       throw new ValidationException("Gia dau gia khong hop le");
     }
+    AuctionRedisResponse info = getAuctionRoom(auctionId).orElseThrow(
+        () -> new NotFoundException("Khong tim thay phien dau gia")
+    );
 
-    long lastPrice = auctionSessionRepository.getLastBid(auctionId)
-        .map(BidMessage::getBid).orElse(0L);
+    long lastPrice = getAuctionLastPrice(auctionId).get().getBid();
 
     boolean valid = bid >= info.getStartBid() 
         && bid >= lastPrice + info.getPricePerStep();
@@ -242,8 +230,9 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
       bid,
       time
     );
+    addBid(auctionId, auctionBid);
     BidMessage message = new BidMessage(userId, auctionBid.getBid(), auctionBid.getCreatedAt());
-    auctionSessionRepository.addBid(auctionId, message);
+    setAuctionLastPrice(auctionId, message); 
     eventPublisher.publishEvent(new BidEvent(auctionId, userId, bid, time));
     return message;
 	}
@@ -279,123 +268,231 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
 
   @Override
   public void openAuctionRoom(Long auctionId) {
-    auctionSessionRepository.getAuctionRoom(auctionId).ifPresent(room -> {
+    if (isAuctionRoomOpen(auctionId)) {
       throw new ForbiddenException("Phong dau gia da mo");
-    });
+    }
+
+    setAuctionRoomOpen(auctionId);
 
     Auction auction = auctionRepository.findById(auctionId).orElseThrow(
         () -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
     );
-    Product product = productRepository.findById(auction.getProduct().getId()).orElseThrow(
-        () -> new NotFoundException("Khong tim thay san pham nao trung voi Id")
-    );
-    AuctionRoom room = AuctionRoom.builder()
-        .ownerId(product.getOwnerId())
-        .startBid(auction.getStartBid())
-        .pricePerStep(auction.getPricePerStep())
-        .isStarted(false)
-        .build();
-    auctionSessionRepository.setAuctionRoom(auctionId, room);
-
-    Long[] userIds = userAuctionRepository.findUserIdsByAuctionId(auctionId).toArray(Long[]::new);
-    auctionSessionRepository.addJoinable(auctionId, userIds); 
+    List<UserAuction> userAuctions = userAuctionRepository.findAllByAuction(auction);
+    userAuctions.stream()
+        .forEach(userAuction 
+            -> addUserToAuction(userAuction.getUser().getId(), auctionId)); 
 
     eventPublisher.publishEvent(new AuctionRoomOpenEvent(auctionId));
   }
 
   @Override
   public void startAuction(Long auctionId) {
-    AuctionRoom room = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
-        () -> new NotFoundException("Phong dau gia chua mo")
-    );
-    if (room.isStarted()) {
+    if (isAuctionActive(auctionId)) {
       throw new ForbiddenException("Phien dau gia da bat dau");
     }
-    room.setStarted(true);
-    auctionSessionRepository.setAuctionRoom(auctionId, room);
+    setAuctionActive(auctionId);
+    setAuctionLastPrice(auctionId, new BidMessage(null, 0L, LocalDateTime.now()));
     eventPublisher.publishEvent(new AuctionStartEvent(auctionId));
   }
 
   @Override
   public void endAuction(Long auctionId) {
-    AuctionRoom room = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
-        () -> new NotFoundException("Phong dau gia chua mo")
-    );
+    if (!isAuctionRoomOpen(auctionId)) {
+      throw new ForbiddenException("Phien dau gia chua bat dau");
+    }
+
     Auction auction = auctionRepository.findById(auctionId).orElseThrow(
         () -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
     );
-    
-    eventPublisher.publishEvent(new AuctionEndEvent(auctionId));
-    leaveAllAuctionUser(auctionId);
-    auctionSessionRepository.deleteAllJoinableByAuction(auctionId);
 
-    if (room.isStarted()) {
+    if (isAuctionActive(auctionId)) {
+      deleteAuctionActive(auctionId);
+
       Product product = auction.getProduct();
-      long lastPrice = auctionSessionRepository.getLastBid(auctionId)
-          .map(BidMessage::getBid).orElse(0L);
-      List<BidMessage> bids = auctionSessionRepository.getBids(auctionId);
+      long lastPrice = getAuctionLastPrice(auctionId).get().getBid();
+      List<AuctionBid> bids = getBids(auctionId);
 
       if (!bids.isEmpty()) {
-        BidMessage lastBid = bids.get(bids.size() - 1);
+        AuctionBid lastBid = bids.get(0);
         if (lastBid.getBid() != lastPrice) {
-          log.error("Gia cuoi cung khong khop");
+          log.info("Gia cuoi cung khong khop");
         }
-
+        auction.setEndBid(lastPrice);
         product.setBuyerId(lastBid.getUserId());
         productRepository.save(product);
-
-        auction.setEndBid(lastPrice);
         auctionRepository.save(auction);
+      }
 
-        saveBids(auctionId, bids);
-      } 
-      
-      auctionSessionRepository.deleteAllBids(auctionId);
-      auctionSessionRepository.deleteAllComments(auctionId);
-    } // if (room.isStarted())
+      deleteAuctionLastPrice(auctionId);
 
-    auctionSessionRepository.deleteAuctionRoom(auctionId);
-  }
-
-  private boolean isAuctionStarted(Long auctionId) {
-    return auctionSessionRepository.getAuctionRoom(auctionId).filter(AuctionRoom::isStarted).isPresent();
-  }
-
-  private void saveBids(Long auctionId, List<BidMessage> bids) {
-    userAuctionHistoryRepository.saveAll(
-        bids.reversed().stream().map(auctionBid -> {
-            UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(auctionBid.getUserId(), auctionId);
-            return UserAuctionHistory.builder()
+      bids.forEach(auctionBid -> {
+        UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(auctionBid.getUserId(), auctionId);
+        userAuctionHistoryRepository.save(
+            UserAuctionHistory.builder()
                 .userAuction(ua)
                 .bid(auctionBid.getBid())
                 .time(auctionBid.getCreatedAt())
-                .build();
-        }).toList()
-    );
+                .build()
+        );
+      });
+
+      deleteBids(auctionId);
+    }
+    setAuctionRoomClosed(auctionId);
+
+    List<UserAuction> userAuctions = userAuctionRepository.findAllByAuction(auction);
+    userAuctions.stream()
+        .forEach(userAuction 
+            -> removeUserFromAuction(userAuction.getUser().getId(), auctionId));
+
+    eventPublisher.publishEvent(new AuctionEndEvent(auctionId));
   }
 
-  private void leaveAllAuctionUser(Long auctionId) {
-    LocalDateTime leaveTime = LocalDateTime.now();
 
-    List<Pair<Long, LocalDateTime>> joins = auctionSessionRepository.getJoinsByAuction(auctionId);
-    auctionSessionRepository.deleteAllJoinByAuction(auctionId);
+  private String getAuctionRoomKey(Long auctionId) {
+    return String.format("auction:%d", auctionId);
+  }
 
-    List<TimeHistory> entries = new ArrayList<>();
-    joins.forEach(pair -> {
-      try {
-        Long userId = pair.getFirst();
-        LocalDateTime joinTime = pair.getSecond();
-        UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
-        TimeHistory entry = TimeHistory.builder()
-            .userAuction(ua)
-            .joinTime(joinTime)
-            .outTime(leaveTime)
-            .build();
-        entries.add(entry);
-      } catch (Exception e) {
-        log.error("Loi khi roi phien dau gia", e);
-      }
-    });
-    timeHistoryRepository.saveAll(entries);
+  private boolean isAuctionRoomOpen(Long auctionId) {
+    String key = getAuctionRoomKey(auctionId);
+    return redisTemplate.hasKey(key);
+  }
+
+  private Optional<AuctionRedisResponse> getAuctionRoom(Long auctionId) {
+    String key = getAuctionRoomKey(auctionId);
+    var template = redisTemplateFactory.get(AuctionRedisResponse.class);
+    return Optional.ofNullable(template.opsForValue().get(key));
+  }
+
+  private void setAuctionRoomOpen(Long auctionId) {
+    String key = getAuctionRoomKey(auctionId);
+    var template = redisTemplateFactory.get(AuctionRedisResponse.class);
+    Auction auction = auctionRepository.findById(auctionId).orElseThrow(
+          () -> new NotFoundException("Khong tim thay auction hop le voi Id")
+    );
+    Product product = auction.getProduct();
+    AuctionRedisResponse value = AuctionRedisResponse.builder()
+          .ownerId(product.getOwnerId())
+          .startBid(auction.getStartBid())
+          .pricePerStep(auction.getPricePerStep())
+          .build();
+    template.opsForValue().set(key, value);
+  }
+
+  private void setAuctionRoomClosed(Long auctionId) {
+    String key = getAuctionRoomKey(auctionId);
+    var template = redisTemplateFactory.get(AuctionRedisResponse.class);
+    template.delete(key);
+  }
+  
+
+  private String getAuctionActiveKey(Long auctionId) {
+    return String.format("auction:%d:active", auctionId);
+  }
+
+  private void setAuctionActive(Long auctionId) {
+    String value = "ok";
+    String key = getAuctionActiveKey(auctionId);
+    redisTemplate.opsForValue().set(key,value);
+  }
+
+  private boolean isAuctionActive(Long auctionId) {
+    String key = getAuctionActiveKey(auctionId);
+    return redisTemplate.hasKey(key);
+  }
+
+  private void deleteAuctionActive(Long auctionId) {
+    String key = getAuctionActiveKey(auctionId);
+    redisTemplate.delete(key);
+  }
+  
+
+  private String getUserAuctionKey(Long userId) {
+    return String.format("user:%d:auction", userId);
+  }
+
+  private List<Long> getUserAuctions(Long userId) {
+    String key = getUserAuctionKey(userId);
+    return redisTemplate.opsForSet().members(key).stream()
+        .map(Long::parseLong)
+        .toList();
+  }
+
+  private boolean canUserJoinAuction(Long userId, Long auctionId) {
+    String key = getUserAuctionKey(userId);
+    return redisTemplate.opsForSet().isMember(key, auctionId.toString());
+  }
+
+  private void addUserToAuction(Long userId, Long auctionId) {
+    String key = getUserAuctionKey(userId);
+    redisTemplate.opsForSet().add(key, auctionId.toString());
+  }
+
+  private void removeUserFromAuction(Long userId, Long auctionId) {
+    String key = getUserAuctionKey(userId);
+    redisTemplate.opsForSet().remove(key, auctionId.toString());
+  }
+
+  private String getLastJoinKey(Long userId, Long auctionId) {
+    return String.format("user:%d:auction:%d:last_join", userId, auctionId);
+  }
+
+  private Optional<LocalDateTime> getUserLastJoinAuction(Long userId, Long auctionId) {
+    String key = getLastJoinKey(userId, auctionId);
+    return Optional.ofNullable(redisTemplate.opsForValue().get(key))
+        .map(LocalDateTime::parse);
+  }
+
+  private void setUserLastJoinAuction(Long userId, Long auctionId, LocalDateTime time) {
+    String key = getLastJoinKey(userId, auctionId);
+    redisTemplate.opsForValue().set(key, time.toString());
+  }
+
+  private void deleteUserLastJoinAuction(Long userId, Long auctionId) {
+    String key = getLastJoinKey(userId, auctionId);
+    redisTemplate.delete(key);
+  }
+
+
+  private String getLastPriceKey(Long auctionId) {
+    return String.format("auction:%d:last_price", auctionId);
+  }
+
+  private Optional<BidMessage> getAuctionLastPrice(long auctionId) {
+    String key = getLastPriceKey(auctionId);
+    var template = redisTemplateFactory.get(BidMessage.class);
+    return Optional.ofNullable(template.opsForValue().get(key));
+  }
+
+  private void setAuctionLastPrice(long auctionId, BidMessage bid) {
+    String key = getLastPriceKey(auctionId);
+    redisTemplateFactory.get(BidMessage.class).opsForValue().set(key, bid);
+  }
+
+  private void deleteAuctionLastPrice(Long auctionId) {
+    String key = getLastPriceKey(auctionId);
+    redisTemplate.delete(key);
+  }
+
+
+  private String getAuctionBidsKey(Long auctionId) {
+    return String.format("auction:%d:bids", auctionId);
+  }
+
+  private void addBid(Long auctionId, AuctionBid bid) {
+    String key = getAuctionBidsKey(auctionId);
+    var template = redisTemplateFactory.get(AuctionBid.class);
+    template.opsForList().leftPush(key, bid);
+  }
+
+  private List<AuctionBid> getBids(Long auctionId) {
+    String key = getAuctionBidsKey(auctionId);
+    var template = redisTemplateFactory.get(AuctionBid.class);
+    return template.opsForList().range(key, 0, -1);
+  }
+
+  private boolean deleteBids(Long auctionId) {
+    String key = String.format("auction:%d:bids", auctionId);
+    return redisTemplate.delete(key);
   }
 }

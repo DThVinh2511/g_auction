@@ -3,6 +3,7 @@ package com.ghtk.auction.repository;
 import com.ghtk.auction.dto.response.auction.AuctionResponse;
 import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.enums.AuctionStatus;
+import com.ghtk.auction.repository.Custom.AuctionRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AuctionRepository extends JpaRepository<Auction,Long> {
+public interface AuctionRepository extends JpaRepository<Auction,Long>, AuctionRepositoryCustom {
 	
 	@Query(value =
 			"""
@@ -39,4 +40,6 @@ public interface AuctionRepository extends JpaRepository<Auction,Long> {
 	List<Object[]> findMyByProductOwnerId(@Param("ownerId") Long ownerId);
 	
 	Page<Auction> findAllByStatus(AuctionStatus status, Pageable pageable);
+	
+	Long countByStatus(AuctionStatus auctionStatus);
 }

@@ -35,5 +35,5 @@ public interface UserService {
 
 	UserResponse getAnotherInfo(Long id);
 	
-	PageResponse<UserResponse> getAllUserByStatus(UserStatus statusAccount, int pageNo, int pageSize, String sortBy, String sortDir);
+	PageResponse<UserResponse> getAllUserByStatus(UserStatus statusAccount, int pageNo, int pageSize);
 }
