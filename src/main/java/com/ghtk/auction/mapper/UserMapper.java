@@ -9,7 +9,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
     User toUser(UserCreationRequest request);
-    @Mapping(target = "password",ignore = true)
     @Mapping(target = "isVerified",ignore = true)
     UserResponse toUserResponse(User user);
 }
