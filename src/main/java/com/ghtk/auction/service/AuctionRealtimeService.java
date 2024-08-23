@@ -19,12 +19,14 @@ public interface AuctionRealtimeService {
 
     AuctionJoinResponse joinAuction(Long userId, Long auctionId);
     void leaveAuction(Long userId, Long auctionId);
+    
+    void leaveAllAuctions(Long userId);
 
     void checkBidding(Long userId, Long auctionId);
     void checkCommenting(Long userId, Long auctionId);
     void checkNotifying(Long userId, Long auctionId);
 
-    Long getCurrentPrice(Long userId, Long auctionId);
+    BidMessage getCurrentPrice(Long userId, Long auctionId);
     List<CommentMessage> getComments(Long userId, Long auctionId, CommentFilter filter);
 
     BidMessage bid(Long userId, Long auctionId, Long bid);

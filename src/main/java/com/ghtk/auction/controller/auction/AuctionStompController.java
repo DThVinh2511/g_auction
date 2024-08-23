@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 
 import com.ghtk.auction.dto.request.auction.BidRequest;
 import com.ghtk.auction.dto.response.ApiResponse;
+import com.ghtk.auction.dto.stomp.BidMessage;
 import com.ghtk.auction.service.AuctionRealtimeService;
 import com.ghtk.auction.service.StompService;
 
@@ -57,8 +58,8 @@ public class AuctionStompController {
       @DestinationVariable Long auctionId,
       @Header("userId") Long userId) {
     System.out.println("subscribing to bid channel");
-    Long lastPrice = auctionRealtimeService.getCurrentPrice(userId, auctionId);
-    stompService.sendAuctionLastPrice(userId, auctionId, lastPrice);
+    // Long lastPrice = auctionRealtimeService.getCurrentPrice(userId, auctionId).getBid();
+    // stompService.sendAuctionLastPrice(userId, auctionId, lastPrice);
   }
   
   @SubscribeMapping("/topic/auction/{auctionId}/comments")
@@ -75,7 +76,7 @@ public class AuctionStompController {
       @DestinationVariable("id") Long auctionId, 
       @Header("userId") Long userId,
       Message<?> message) {
-    Long lastPrice = auctionRealtimeService.getCurrentPrice(userId, auctionId);
+    BidMessage lastPrice = auctionRealtimeService.getCurrentPrice(userId, auctionId);
     stompService.sendMessageReceipt(userId, message, ApiResponse.success(lastPrice));
   }
 

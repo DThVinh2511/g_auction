@@ -1,5 +1,6 @@
 package com.ghtk.auction.config.stomp;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.messaging.Message;
@@ -54,7 +55,7 @@ public class JwtInterceptor implements ChannelInterceptor {
         throw new UnauthenticatedStompMessageException(headers.getSessionId(), Optional.of(CloseStatus.NOT_ACCEPTABLE));
       }
       Jwt jwt = jwtDecoder.decode(token.substring(7));
-      if (jwt.getClaims().get("id") != headers.getSessionAttributes().get("userId")) {
+      if (!Objects.equals(jwt.getClaims().get("id"), headers.getSessionAttributes().get("userId"))) {
         throw new Exception("User id in token does not match user id in session");
       }
       System.out.println("OK");

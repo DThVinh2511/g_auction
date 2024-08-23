@@ -23,6 +23,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 // import org.springframework.web.socket.handler.WebSocketHandlerDecoratorFactory;
 // import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
 // import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -80,10 +81,10 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
       return true;
     }
 
-    // @Override
-    // public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
-    //   registry.addDecoratorFactory(sessionStoringWebDecorFactory);
-    // }
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
+      registry.addDecoratorFactory(applicationContext.getBean(CustomWebDecorFactory.class));
+    }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {

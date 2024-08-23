@@ -39,6 +39,7 @@ public class AdminController {
   public ApiResponse<Void> openAuction(
       @PathVariable Long auctionId
   ) {
+    auctionService.updateStatus(new AuctionUpdateStatusRequest(auctionId, AuctionStatus.CLOSED));
     auctionRealtimeService.openAuctionRoom(auctionId);
     return ApiResponse.success(null);
   }
@@ -58,7 +59,7 @@ public class AdminController {
   public ApiResponse<Void> endAuction(
       @PathVariable Long auctionId
   ) {
-    auctionService.updateStatus(new AuctionUpdateStatusRequest(auctionId, AuctionStatus.CLOSED));
+    auctionService.updateStatus(new AuctionUpdateStatusRequest(auctionId, AuctionStatus.FINISHED));
     auctionRealtimeService.endAuction(auctionId);
     return ApiResponse.success(null);
   }
@@ -73,7 +74,7 @@ public class AdminController {
   public ApiResponse<Void> publishNotification(
     @RequestBody String message,
     @PathVariable Long auctionId) {
-    stompService.sendGlobalNotification(new NotifyMessage(message, LocalDateTime.now()));
+    stompService.broadcastAuctionNotification(auctionId, new NotifyMessage(message, LocalDateTime.now()));
     return ApiResponse.ok("ok");
   }
 }
