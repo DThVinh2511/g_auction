@@ -25,7 +25,7 @@ public class UpdateAuctionStatus implements Job {
 	
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-		log.info("Updating status of auction");
+		System.out.println("set status of auction");
 
 		JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
 
