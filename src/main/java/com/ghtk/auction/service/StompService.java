@@ -16,7 +16,7 @@ public interface StompService {
 
   public void broadcastStartAuction(long auctionId);
 
-  public void broadcastEndAuction(long auctionId);
+  public void broadcastEndAuction(long auctionId, Long winnerId);
 
   public void broadcastBid(long auctionId, BidMessage bidResponse);
 

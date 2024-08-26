@@ -7,4 +7,5 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AuctionEndEvent {
   private final Long auctionId;
+  private final Long winnerId;
 }

@@ -14,7 +14,7 @@ import java.util.List;
 
 public interface ProductService {
 	
-	Product createProduct(ProductCreationRequest request);
+	Product createProduct(Jwt principal, ProductCreationRequest request);
 	
 	List<ProductResponse> getAllMyProduct(int pageNo, int pageSize);
 	
@@ -41,5 +41,5 @@ public interface ProductService {
 	
 	PageResponse<ProductResponse> getAllProduct(int pageNo, int pageSize);
 
-    List<Integer> listFavoriteProduct(Jwt principal);
+	List<Integer> listFavoriteProduct(Jwt principal);
 }

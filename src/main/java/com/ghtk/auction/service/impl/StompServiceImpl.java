@@ -61,10 +61,10 @@ public class StompServiceImpl implements StompService {
   }
 
   @Override
-  public void broadcastEndAuction(long auctionId) {
+  public void broadcastEndAuction(long auctionId, Long winnerId) {
     messagingTemplate.convertAndSend(
         "/topic/auction/" + auctionId + "/control",
-        new ControlMessage<>("end", (Void) null));
+        new ControlMessage<>("end", winnerId));
   }
 
   @Override

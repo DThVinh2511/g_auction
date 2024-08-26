@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +27,8 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 public class AuthenticateController {
     AuthenticationService authenticationService;
-
+    
+    @PreAuthorize("!@userComponent.isBanUser(#request.email)")
     @PostMapping("/authenticate")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> authenticate(@RequestBody AuthenticationRequest request){
         return ResponseEntity.ok(ApiResponse.success(authenticationService.authenticate(request)));

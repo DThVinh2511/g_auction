@@ -260,20 +260,13 @@ public class AuctionServiceImpl implements AuctionService {
 //		}
 //
 //		LocalDateTime endTime = startTime.plusMinutes(60);
-//		LocalDateTime now = LocalDateTime.now();
-//
-//		LocalDateTime endRegistration = now.plusMinutes(1);
-//
-//		LocalDateTime startTime = now.plusMinutes(2);
-//
-//		LocalDateTime endTime = now.plusMinutes(3);
 		LocalDateTime now = LocalDateTime.now();
 
-		LocalDateTime endRegistration = now.plusMinutes(2);
+		LocalDateTime endRegistration = now.plusMinutes(1);
 
-		LocalDateTime startTime = now.plusMinutes(5);
+		LocalDateTime startTime = endRegistration.plusMinutes(1);
 
-		LocalDateTime endTime = now.plusMinutes(15);
+		LocalDateTime endTime = startTime.plusMinutes(1);
 		
 		auction.setConfirmDate(now);
 		auction.setEndRegistration(endRegistration);

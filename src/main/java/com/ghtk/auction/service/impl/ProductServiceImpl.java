@@ -11,11 +11,9 @@ import com.ghtk.auction.entity.UserProduct;
 import com.ghtk.auction.enums.ProductCategory;
 import com.ghtk.auction.exception.AlreadyExistsException;
 import com.ghtk.auction.exception.NotFoundException;
-import com.ghtk.auction.mapper.ProductMapper;
 import com.ghtk.auction.repository.ProductRepository;
 import com.ghtk.auction.repository.UserProductRepository;
 import com.ghtk.auction.repository.UserRepository;
-import com.ghtk.auction.service.ImageService;
 import com.ghtk.auction.service.ProductService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -41,11 +39,12 @@ public class ProductServiceImpl implements ProductService {
 	final UserProductRepository userProductRepository;
 
 	@Override
-	public Product createProduct(ProductCreationRequest request) {
-		var context = SecurityContextHolder.getContext();
-		String email = context.getAuthentication().getName();
-		
-		User user = userRepository.findByEmail(email);
+	public Product createProduct(Jwt principal, ProductCreationRequest request) {
+//		var context = SecurityContextHolder.getContext();
+//		String email = context.getAuthentication().getName();
+//
+//		User user = userRepository.findByEmail(email);
+		User user = userRepository.findByEmail(principal.getClaims().get("sub").toString());
 		
 		Product product = new Product();
 		product.setName(request.getName());

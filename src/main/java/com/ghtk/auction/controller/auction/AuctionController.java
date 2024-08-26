@@ -122,7 +122,6 @@ public class AuctionController {
   }
 
   @PostMapping("/{auctionId}/join")
-  @PreAuthorize("@auctionComponent.isRegisteredAuction(#auctionId, principal)")
   public ApiResponse<AuctionJoinResponse> joinAuction(
       @PathVariable Long auctionId,
       @AuthenticationPrincipal Jwt jwt

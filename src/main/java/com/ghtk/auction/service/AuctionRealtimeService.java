@@ -19,6 +19,8 @@ public interface AuctionRealtimeService {
 
     AuctionJoinResponse joinAuction(Long userId, Long auctionId);
     void leaveAuction(Long userId, Long auctionId);
+    
+    void leaveAllAuctions(Long userId);
 
     void checkBidding(Long userId, Long auctionId);
     void checkCommenting(Long userId, Long auctionId);

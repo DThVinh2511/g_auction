@@ -25,7 +25,7 @@ public class UpdateAuctionStatus implements Job {
 	
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-		System.out.println("set status of auction");
+		log.info("Updating status of auction");
 
 		JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
 
@@ -37,6 +37,7 @@ public class UpdateAuctionStatus implements Job {
 //		Auction auction = auctionRepository.findById(request.getAuctionId()).orElseThrow(
 //				() -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
 //		);
+		log.info("UpdateAuctionStatus: auctionId = {}", request.getAuctionId());
 		auctionService.updateStatus(request);
 	}
 

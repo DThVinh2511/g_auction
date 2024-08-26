@@ -19,9 +19,10 @@ public class RedisActiveAuction implements Job {
 	
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-		System.out.println("start auction");
+
 		JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
 		Long auctionId = jobDataMap.getLong("auctionId");
+		log.info("RedisActiveAuction: auctionId = {}", auctionId);
 		auctionRealtimeService.startAuction(auctionId);
 	}
 
