@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "product")
+@ToString
 //@SqlResultSetMapping(
 //      name = "ProductResponseMapping",
 //      classes = @ConstructorResult(
