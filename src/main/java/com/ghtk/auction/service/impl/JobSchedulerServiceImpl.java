@@ -5,6 +5,7 @@ import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.enums.AuctionStatus;
 import com.ghtk.auction.repository.AuctionRepository;
 import com.ghtk.auction.scheduler.jobs.RedisActiveAuction;
+import com.ghtk.auction.scheduler.jobs.RedisEndAuction;
 import com.ghtk.auction.scheduler.jobs.RedisOpenAuction;
 import com.ghtk.auction.scheduler.jobs.UpdateAuctionStatus;
 import com.ghtk.auction.service.JobSchedulerService;
@@ -46,6 +47,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 //		LocalDateTime time = auction.getStartTime().minusMinutes(10);
 		LocalDateTime openTime = auction.getEndRegistration();
 		LocalDateTime startTime = auction.getStartTime();
+    LocalDateTime endTime = auction.getEndTime();
 		
 		log.info("openTime: {}",openTime);
 		log.info("startTime: {}",startTime);
@@ -55,6 +57,8 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 		
 		// Lên lịch thêm vào redis thông tin Auction khi bắt đầu start
 		scheduleRedisActiveAuction(auction,startTime);
+
+    scheduleRedisEndAuction(auction, endTime);
 	}
 	private void scheduleStatusUpdate(Auction auction, AuctionStatus newStatus, LocalDateTime scheduledTime) throws SchedulerException {
 		AuctionUpdateStatusRequest request = new AuctionUpdateStatusRequest();
@@ -82,8 +86,15 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 		
 		scheduler.scheduleJob(job, trigger);
 	}
+	private void scheduleRedisEndAuction(Auction auction, LocalDateTime scheduledTime) throws SchedulerException {
+		Long auctionId = auction.getId();
+		JobDetail job = buildRedisAuctionEndJobDetail(RedisEndAuction.class,auctionId);
+		Trigger trigger = buildRedisAuctionEndJobTrigger(RedisEndAuction.class,auctionId,scheduledTime);
+		
+		scheduler.scheduleJob(job, trigger);
+	}
 	
-	private JobDetail buildAuctionJobDetail(Class className, AuctionUpdateStatusRequest request) {
+	private JobDetail buildAuctionJobDetail(Class<? extends Job> className, AuctionUpdateStatusRequest request) {
 		return JobBuilder.newJob(className)
 				.withIdentity(className.getName() + "-" + request.getAuctionId()+ "-" + request.getAuctionStatus(), "auction-status-jobs")
 				.usingJobData("auctionId", request.getAuctionId())
@@ -95,7 +106,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 	
 	
 	
-	private JobDetail buildRedisAuctionJobDetail(Class className,Long auctionId) {
+	private JobDetail buildRedisAuctionJobDetail(Class<? extends Job> className,Long auctionId) {
 		return JobBuilder.newJob(className)
 				.withIdentity(className.getName() + "-" + auctionId , "auction-redis-jobs")
 				.usingJobData("auctionId", String.valueOf(auctionId))
@@ -104,7 +115,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 				.build();
 	}
 	
-	private JobDetail buildRedisAuctionActiveJobDetail(Class className,Long auctionId) {
+	private JobDetail buildRedisAuctionActiveJobDetail(Class<? extends Job> className,Long auctionId) {
 		return JobBuilder.newJob(className)
 				.withIdentity(className.getName() + "-" + auctionId + "active", "auction-redis-jobs")
 				.usingJobData("auctionId", String.valueOf(auctionId))
@@ -113,7 +124,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 				.build();
 	}
 	
-	private Trigger buildRedisAuctionActiveJobTrigger(Class className, Long auctionId, LocalDateTime scheduledTime) {
+	private Trigger buildRedisAuctionActiveJobTrigger(Class<? extends Job> className, Long auctionId, LocalDateTime scheduledTime) {
 		ZoneId zoneId = ZoneId.systemDefault();
 		Date initTime = Date.from(scheduledTime.atZone(zoneId).toInstant());
 		return TriggerBuilder.newTrigger()
@@ -122,7 +133,25 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 				.build();
 	}
 	
-	private Trigger buildAuctionJobTrigger(Class className, AuctionUpdateStatusRequest request, LocalDateTime scheduledTime) {
+	private JobDetail buildRedisAuctionEndJobDetail(Class<? extends Job> className,Long auctionId) {
+		return JobBuilder.newJob(className)
+				.withIdentity(className.getName() + "-" + auctionId + "end", "auction-redis-jobs")
+				.usingJobData("auctionId", String.valueOf(auctionId))
+				.storeDurably(true)
+				.requestRecovery()
+				.build();
+	}
+	
+	private Trigger buildRedisAuctionEndJobTrigger(Class<? extends Job> className, Long auctionId, LocalDateTime scheduledTime) {
+		ZoneId zoneId = ZoneId.systemDefault();
+		Date initTime = Date.from(scheduledTime.atZone(zoneId).toInstant());
+		return TriggerBuilder.newTrigger()
+				.withIdentity(className.getName() + "-" + auctionId + "end", "auction-trigger-redis-jobs")
+				.startAt(initTime)
+				.build();
+	}
+	
+	private Trigger buildAuctionJobTrigger(Class<? extends Job> className, AuctionUpdateStatusRequest request, LocalDateTime scheduledTime) {
 		ZoneId zoneId = ZoneId.systemDefault();
 		Date initTime = Date.from(scheduledTime.atZone(zoneId).toInstant());
 		return TriggerBuilder.newTrigger()
@@ -131,7 +160,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 				.build();
 	}
 	
-	private Trigger buildRedisAuctionJobTrigger(Class className, Long auctionId, LocalDateTime scheduledTime) {
+	private Trigger buildRedisAuctionJobTrigger(Class<? extends Job> className, Long auctionId, LocalDateTime scheduledTime) {
 		ZoneId zoneId = ZoneId.systemDefault();
 		Date initTime = Date.from(scheduledTime.atZone(zoneId).toInstant());
 		
@@ -143,7 +172,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 	
 	
 
-//	private JobDetail buildAuctionJobDetail(Class className, AuctionUpdateStatusRequest request) {
+//	private JobDetail buildAuctionJobDetail(Class<? extends Job> className, AuctionUpdateStatusRequest request) {
 //		return newJob(className)
 //				.withIdentity(className.getName(),"auction-jobs")
 //				.usingJobData("auctionId", request.getAuctionId())
@@ -152,7 +181,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 //				.build();
 //	}
 //
-//	private Trigger buildAuctionJobTrigger(Class className, AuctionUpdateStatusRequest request) {
+//	private Trigger buildAuctionJobTrigger(Class<? extends Job> className, AuctionUpdateStatusRequest request) {
 //		Auction auction = auctionRepository.findById(request.getAuctionId()).orElseThrow(
 //				() -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
 //		);

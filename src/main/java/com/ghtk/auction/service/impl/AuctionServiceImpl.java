@@ -19,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.quartz.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +48,13 @@ public class AuctionServiceImpl implements AuctionService {
 	final TimeHistoryRepository timeHistoryRepository;
 	final Scheduler scheduler;
 	final JobSchedulerService jobSchedulerService;
+
+  @Value("${auction.schedule.regis_duration:2880}")
+  int regisDuration;
+  @Value("${auction.schedule.start_delay:4320}")
+  int startDelay;
+  @Value("${auction.schedule.auction_duration:30}")
+  int auctionDuration;
 	
 	@PreAuthorize("@productComponent.isProductOwner(#request.productId, principal)")
 	@Override
@@ -260,15 +269,13 @@ public class AuctionServiceImpl implements AuctionService {
 //		}
 //
 //		LocalDateTime endTime = startTime.plusMinutes(60);
-		LocalDateTime now = LocalDateTime.now();
 
-		LocalDateTime endRegistration = now.plusMinutes(1);
-
-		LocalDateTime startTime = endRegistration.plusMinutes(1);
-
-		LocalDateTime endTime = startTime.plusMinutes(1);
+		LocalDateTime confirmDate = LocalDateTime.now();
+		LocalDateTime endRegistration = confirmDate.plus(Duration.ofMinutes(regisDuration));
+		LocalDateTime startTime = confirmDate.plus(Duration.ofMinutes(startDelay));
+		LocalDateTime endTime = startTime.plus(Duration.ofMinutes(auctionDuration));
 		
-		auction.setConfirmDate(now);
+		auction.setConfirmDate(confirmDate);
 		auction.setEndRegistration(endRegistration);
 		auction.setStartTime(startTime);
 		auction.setEndTime(endTime);

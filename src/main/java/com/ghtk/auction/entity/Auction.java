@@ -2,6 +2,7 @@ package com.ghtk.auction.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.ghtk.auction.dto.response.auction.AuctionListResponse;
 import com.ghtk.auction.enums.AuctionStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +10,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,6 +17,29 @@ import java.time.LocalDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "auction")
+@SqlResultSetMapping(
+		name = "AuctionListProjectionMapping",
+		classes = @ConstructorResult(
+				targetClass = AuctionListResponse.class,
+				columns = {
+						@ColumnResult(name = "id", type = Long.class),
+						@ColumnResult(name = "productId", type = Long.class),
+						@ColumnResult(name = "title", type = String.class),
+						@ColumnResult(name = "description", type = String.class),
+						@ColumnResult(name = "image", type = String.class),
+						@ColumnResult(name = "createdAt", type = LocalDateTime.class),
+						@ColumnResult(name = "confirmDate", type = LocalDateTime.class),
+						@ColumnResult(name = "endRegistration", type = LocalDateTime.class),
+						@ColumnResult(name = "startTime", type = LocalDateTime.class),
+						@ColumnResult(name = "endTime", type = LocalDateTime.class),
+						@ColumnResult(name = "startBid", type = Long.class),
+						@ColumnResult(name = "pricePerStep", type = Long.class),
+						@ColumnResult(name = "endBid", type = Long.class),
+						@ColumnResult(name = "status", type = String.class)
+				}
+		)
+)
+@Entity
 public class Auction {
 	
 	@Id
