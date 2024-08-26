@@ -119,4 +119,9 @@ public class ProductController {
 	) {
 		return ResponseEntity.ok(ApiResponse.success(productService.getAllProduct(pageNo, pageSize)));
 	}
+
+	@GetMapping("/list-product-favorite")
+	public ResponseEntity<ApiResponse<List<Integer>>> getProduct(@AuthenticationPrincipal Jwt principal) {
+		return ResponseEntity.ok(ApiResponse.success(productService.listFavoriteProduct(principal)));
+	}
 }

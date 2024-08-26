@@ -40,4 +40,6 @@ public interface ProductService {
 	PageResponse<ProductResponse> getAllProductByCategory(ProductCategory category, int pageNo, int pageSize);
 	
 	PageResponse<ProductResponse> getAllProduct(int pageNo, int pageSize);
+
+    List<Integer> listFavoriteProduct(Jwt principal);
 }

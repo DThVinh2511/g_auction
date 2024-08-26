@@ -54,4 +54,13 @@ public interface ProductRepository extends JpaRepository<Product,Long>, ProductR
 	Long countAll();
 	
 	Long countByCategory(ProductCategory category);
+
+	@Query(value =
+			"""
+			SELECT product_id
+		   FROM `user_product`
+		   WHERE user_id = :userId
+		""", nativeQuery = true
+	)
+	List<Integer> checkFavoriteProduct(Long userId);
 }

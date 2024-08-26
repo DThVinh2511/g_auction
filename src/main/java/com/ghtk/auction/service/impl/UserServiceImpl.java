@@ -217,7 +217,7 @@ public class UserServiceImpl implements UserService {
 	
 	@Override
 	public PageResponse<UserResponse> getAllInfo(int pageNo, int pageSize, String sortBy, String sortDir) {
-		Sort sort =sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+		Sort sort =sortDir.equalsIgnoreCase(Sort.Direction.DESC.name())
 				? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
 
 		Pageable pageable= PageRequest.of(pageNo,pageSize,sort);

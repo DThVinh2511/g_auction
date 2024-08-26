@@ -210,6 +210,7 @@ public class ProductServiceImpl implements ProductService {
 		pageAuctionResponse.setPageSize(pageSize);
 		pageAuctionResponse.setLast(true);
 		pageAuctionResponse.setContent(products);
+		pageAuctionResponse.setTotalElements(products.size());
 		return pageAuctionResponse;
 	}
 
@@ -283,5 +284,11 @@ public class ProductServiceImpl implements ProductService {
 		pageProductResponse.setTotalElements(total);
 		pageProductResponse.setContent(content);
 		return pageProductResponse;
+	}
+
+	@Override
+	public List<Integer> listFavoriteProduct(Jwt principal) {
+		Long userId = (Long) principal.getClaims().get("id");
+		return productRepository.checkFavoriteProduct(userId);
 	}
 }
