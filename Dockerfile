@@ -18,12 +18,12 @@ FROM amazoncorretto:21.0.4
 WORKDIR /app
 
 # Set timezone environment variable
-ENV TZ=Asia/Ho_Chi_Minh
-
-# Install tzdata package (only if needed)
-RUN yum install -y tzdata && \
-    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone \
+#ENV TZ=Asia/Ho_Chi_Minh
+#
+## Install tzdata package (only if needed)
+#RUN yum install -y tzdata && \
+#    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+#    echo $TZ > /etc/timezone \
 
 COPY --from=build /app/target/*.jar app.jar
 
