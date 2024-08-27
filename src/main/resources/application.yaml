@@ -82,5 +82,5 @@ springfox:
 auction:
   schedule:
     regis_duration: 3
-    start_delay: 3
-    auction_duration: 4
+    start_delay: 4
+    auction_duration: 5
