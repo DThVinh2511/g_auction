@@ -16,6 +16,15 @@ FROM amazoncorretto:21.0.4
 
 # Set working folder to App and copy complied file from above step
 WORKDIR /app
+
+# Set timezone environment variable
+ENV TZ=Asia/Ho_Chi_Minh
+
+# Install tzdata package (only if needed)
+RUN yum install -y tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone \
+
 COPY --from=build /app/target/*.jar app.jar
 
 # Command to run the application

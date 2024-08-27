@@ -77,3 +77,10 @@ springfox:
   resources:
     static:
       enabled: true
+
+
+auction:
+  schedule:
+    regis_duration: 3
+    start_delay: 3
+    auction_duration: 4
