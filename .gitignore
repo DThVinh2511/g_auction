@@ -4,7 +4,7 @@ target/
 !**/src/test/**/target/
 
 ## env file
-*.env
+local.env
 .DS_Store
 **/.DS_Store
 
