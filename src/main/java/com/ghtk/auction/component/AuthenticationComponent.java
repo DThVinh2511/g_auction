@@ -5,6 +5,7 @@ import com.ghtk.auction.dto.response.user.IntrospectResponse;
 import com.ghtk.auction.entity.User;
 import com.ghtk.auction.enums.UserStatus;
 import com.ghtk.auction.exception.AuthenticatedException;
+import com.ghtk.auction.exception.ExpiredTokenException;
 import com.ghtk.auction.repository.BlackListTokenRepository;
 import com.ghtk.auction.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
@@ -46,15 +47,21 @@ public class AuthenticationComponent {
     public IntrospectResponse introspect(IntrospectRequest request) throws ParseException, JOSEException {
         var token = request.getToken();
         boolean isValid = true;
-
+        StringBuilder content = new StringBuilder("");
         try {
             verifyToken(token);
         }
         catch (AuthenticatedException e) {
             isValid = false;
+            content.append("Unauthenticated");
+        }
+        catch (ExpiredTokenException e) {
+            isValid = false;
+            content.append("ExpiredToken");
+            throw new ExpiredTokenException(e.getMessage());
         }
 
-        return IntrospectResponse.builder().valid(isValid).build();
+        return IntrospectResponse.builder().valid(isValid).content(content.toString()).build();
     }
 
     public SignedJWT verifyToken(String token) throws JOSEException, ParseException {
@@ -65,8 +72,10 @@ public class AuthenticationComponent {
         Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
         var verified = signedJWT.verify(verifier);
-
-        if (!(verified && expiryTime.after(new Date()))) {
+        if(!expiryTime.after(new Date())) {
+            throw new ExpiredTokenException("ExpiredToken");
+        }
+        if (!verified) {
             throw new AuthenticatedException("Unauthenticated");
         }
 

@@ -8,6 +8,7 @@ import com.ghtk.auction.dto.redis.AuctionRoom;
 import com.ghtk.auction.dto.request.comment.CommentFilter;
 import com.ghtk.auction.dto.response.auction.AuctionJoinResponse;
 
+import com.ghtk.auction.enums.AuctionStatus;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -348,6 +349,7 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
         productRepository.save(product);
 
         auction.setEndBid(lastPrice);
+        auction.setStatus(AuctionStatus.FINISHED);
         auctionRepository.save(auction);
 
         saveBids(auctionId, bids);

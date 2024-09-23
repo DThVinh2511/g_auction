@@ -40,14 +40,14 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 		scheduleStatusUpdate(auction, AuctionStatus.IN_PROGRESS, auction.getStartTime());
 		
 		// Lên lịch chuyển sang trạng thái FINISHED
-		scheduleStatusUpdate(auction, AuctionStatus.FINISHED, auction.getEndTime());
+        // scheduleStatusUpdate(auction, AuctionStatus.FINISHED, auction.getEndTime());
 	}
 	@Override
 	public void scheduleRedisAuction(Auction auction) throws SchedulerException {
 //		LocalDateTime time = auction.getStartTime().minusMinutes(10);
 		LocalDateTime openTime = auction.getEndRegistration();
 		LocalDateTime startTime = auction.getStartTime();
-    LocalDateTime endTime = auction.getEndTime();
+		LocalDateTime endTime = auction.getEndTime();
 		
 		log.info("openTime: {}",openTime);
 		log.info("startTime: {}",startTime);
@@ -58,7 +58,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 		// Lên lịch thêm vào redis thông tin Auction khi bắt đầu start
 		scheduleRedisActiveAuction(auction,startTime);
 
-    scheduleRedisEndAuction(auction, endTime);
+    	scheduleRedisEndAuction(auction, endTime);
 	}
 	private void scheduleStatusUpdate(Auction auction, AuctionStatus newStatus, LocalDateTime scheduledTime) throws SchedulerException {
 		AuctionUpdateStatusRequest request = new AuctionUpdateStatusRequest();

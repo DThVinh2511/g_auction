@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 public class UpdateAuctionStatus implements Job {
 	
 	private final AuctionService auctionService;
-	private final AuctionRepository auctionRepository;
 	
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -33,10 +32,7 @@ public class UpdateAuctionStatus implements Job {
 
 		request.setAuctionId(jobDataMap.getLong("auctionId")) ;
 		request.setAuctionStatus(AuctionStatus.valueOf(jobDataMap.getString("auctionStatus")));
-		
-//		Auction auction = auctionRepository.findById(request.getAuctionId()).orElseThrow(
-//				() -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
-//		);
+
 		log.info("UpdateAuctionStatus: auctionId = {}", request.getAuctionId());
 		auctionService.updateStatus(request);
 	}

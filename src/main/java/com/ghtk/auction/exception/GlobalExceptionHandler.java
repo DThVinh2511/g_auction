@@ -60,6 +60,11 @@ public class GlobalExceptionHandler {
         log.error("NotAuthenticateException: ", ex);
         return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
+    @ExceptionHandler(ExpiredTokenException.class)
+    public ResponseEntity<ApiResponse<Void>> expiredTokenException(ExpiredTokenException ex) {
+        log.error("ExpiredTokenException: ", ex);
+        return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.UNAUTHORIZED);
+    }
     @ExceptionHandler(AlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> alreadyExistsException(AlreadyExistsException ex) {
         log.error("AlreadyExistsException: ", ex);
