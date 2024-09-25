@@ -76,7 +76,15 @@ public class AuctionController {
 	public ResponseEntity<ApiResponse<List<Auction>>> getMyJoined(@AuthenticationPrincipal Jwt jwt) {
 		return ResponseEntity.ok(ApiResponse.success(auctionService.getMyJoinedAuction(jwt)));
 	}
-	
+
+	@GetMapping("/get-my-won")
+	public ResponseEntity<ApiResponse<PageResponse<AuctionListResponse>>> getMyWon(
+			@AuthenticationPrincipal Jwt jwt,
+			@RequestParam(value = "pageNo", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
+			@RequestParam(value = "pageSize", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize) {
+		return ResponseEntity.ok(ApiResponse.success(auctionService.getMyWon(jwt, pageNo, pageSize)));
+	}
+
 	@PostMapping("/{id}/regis-join")
 	public ResponseEntity<ApiResponse<String>> regisJoinAuction(
 			@AuthenticationPrincipal Jwt jwt,

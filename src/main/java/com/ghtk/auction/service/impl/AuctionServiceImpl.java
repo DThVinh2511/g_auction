@@ -326,7 +326,23 @@ public class AuctionServiceImpl implements AuctionService {
 		
 		return pageAuctionResponse;
 	}
-	
+
+	@Override
+	public PageResponse<AuctionListResponse> getMyWon(Jwt jwt, int pageNo, int pageSize) {
+		Long userId = (Long)jwt.getClaims().get("id");
+		Pageable pageable = PageRequest.of(pageNo,pageSize);
+
+		List<AuctionListResponse> auctions = auctionRepository.getAllAuctionMyWon(pageable,userId);
+		PageResponse<AuctionListResponse> pageAuctionResponse = new PageResponse<>();
+		pageAuctionResponse.setPageNo(pageNo);
+		pageAuctionResponse.setPageSize(pageSize);
+//		pageAuctionResponse.setTotalElements(auctions.size());
+		pageAuctionResponse.setLast(true);
+		pageAuctionResponse.setContent(auctions);
+
+		return pageAuctionResponse;
+	}
+
 	private LocalDateTime convertToLocalDateTime(Timestamp timestamp) {
 		return timestamp!=null ? timestamp.toLocalDateTime() : null;
 	}

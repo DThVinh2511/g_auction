@@ -39,5 +39,6 @@ public interface AuctionService {
     void updateStatus(AuctionUpdateStatusRequest request);
     void rejectAuction(Long auctionId);
     PageResponse<AuctionListResponse> getAllAuctionByStatus(AuctionStatus auctionStatus, int pageNo, int pageSize);
-    
+
+    PageResponse<AuctionListResponse> getMyWon(Jwt jwt, int pageNo, int pageSize);
 }

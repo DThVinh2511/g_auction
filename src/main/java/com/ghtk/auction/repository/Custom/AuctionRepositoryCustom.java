@@ -9,4 +9,6 @@ import java.util.List;
 public interface AuctionRepositoryCustom {
 
     List<AuctionListResponse> getAllAuctionListResponse(Pageable pageable, AuctionStatus status);
+
+    List<AuctionListResponse> getAllAuctionMyWon(Pageable pageable, Long id);
 }
