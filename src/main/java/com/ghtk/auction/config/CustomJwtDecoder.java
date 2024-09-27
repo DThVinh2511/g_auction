@@ -7,6 +7,9 @@ import com.ghtk.auction.exception.ExpiredTokenException;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -27,6 +30,8 @@ public class CustomJwtDecoder implements JwtDecoder {
 
     @Autowired
     AuthenticationComponent authenticationComponent;
+    @Autowired
+    RedisTemplate<String, String> redisTemplate;
 
 
     private NimbusJwtDecoder nimbusJwtDecoder = null;
@@ -42,12 +47,17 @@ public class CustomJwtDecoder implements JwtDecoder {
                 throw new AuthenticatedException("Unauthenticated");
 //            if(!response.isValid() && response.getContent().equals("ExpiredToken"))
 //                throw new ExpiredTokenException("ExpiredToken");
-            } catch (JOSEException | ParseException e) {
-                throw new JwtException(e.getMessage());
-            } catch (ExpiredTokenException e) {
-                OAuth2Error oAuth2Error = new OAuth2Error("token_expired", "JWT token has expired", null);
-                throw new OAuth2AuthenticationException(oAuth2Error, e);
+            String tmp = redisTemplate.opsForValue().get("accessToken: " + response.getEmail());
+            if(!tmp.equals(token)) {
+                OAuth2Error oAuth2Error = new OAuth2Error("token_old", "JWT token has been deleted ", null);
+                throw new OAuth2AuthenticationException(oAuth2Error);
             }
+        } catch (JOSEException | ParseException e) {
+            throw new JwtException(e.getMessage());
+        } catch (ExpiredTokenException e) {
+            OAuth2Error oAuth2Error = new OAuth2Error("token_expired", "JWT token has expired", null);
+            throw new OAuth2AuthenticationException(oAuth2Error, e);
+        }
 
         if (Objects.isNull(nimbusJwtDecoder)) {
             SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");

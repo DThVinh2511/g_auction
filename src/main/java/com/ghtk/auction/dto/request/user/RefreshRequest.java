@@ -12,5 +12,5 @@ import lombok.experimental.FieldDefaults;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RefreshRequest {
-    String token;
+    String refreshToken;
 }

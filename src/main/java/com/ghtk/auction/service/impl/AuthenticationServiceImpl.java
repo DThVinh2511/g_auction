@@ -80,8 +80,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
             if (authenticated) {
                 String token = generateToken(user);
-                generateRefreshToken(user);
-                return AuthenticationResponse.builder().token(token).authenticated(true).build();
+                String refreshToken = generateRefreshToken(user);
+                return AuthenticationResponse.builder().token(token).refreshToken(refreshToken).authenticated(true).build();
             }
             else {
                 throw new AuthenticatedException("Password is incorrect");
@@ -113,18 +113,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     
     @Override
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
-        SignedJWT signedJWT = SignedJWT.parse(request.getToken());
+        SignedJWT signedJWT = SignedJWT.parse(request.getRefreshToken());
         var email = signedJWT.getJWTClaimsSet().getSubject();
-        String accessToken = (String) redisTemplate.opsForValue().get("accessToken: " + email);
         String refreshToken = (String) redisTemplate.opsForValue().get("refreshToken: " + email);
-        if(!accessToken.equals(request.getToken())) {
+        if(!refreshToken.equals(request.getRefreshToken())) {
             throw new AuthenticatedException("Unauthenticated");
         }
         authenticationComponent.verifyToken(refreshToken);
         User user = userRepository.findByEmail(email);
         var token = generateToken(user);
-        generateRefreshToken(user);
-        return AuthenticationResponse.builder().token(token).authenticated(true).build();
+        String refreshTokenNew = generateRefreshToken(user);
+        return AuthenticationResponse.builder().token(token).refreshToken(refreshTokenNew).authenticated(true).build();
     }
     
     private String generateToken(User user) {
@@ -145,7 +144,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         try {
             jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
-            redisTemplate.opsForValue().set("accessToken: " + user.getEmail(), jwsObject.serialize());
+//            String tmp = redisTemplate.opsForValue().get("accessToken: " + user.getEmail());
+//            if(tmp == null || tmp.equals("")){
+                redisTemplate.opsForValue().set("accessToken: " + user.getEmail(), jwsObject.serialize());
+//            } else {
+//                BlackListToken blackListToken =
+//                        BlackListToken.builder()
+//                                .token(tmp)
+//                                .createdAt(LocalDateTime.now())
+//                                .expiryTime(LocalDateTime.now().plusMinutes(5))
+//                                .build();
+//
+//                blackListTokenRepository.save(blackListToken);
+//                redisTemplate.opsForValue().set("accessToken: " + user.getEmail(), jwsObject.serialize());
+//            }
             return jwsObject.serialize();
         } catch (JOSEException e) {
             log.error("Cannot create token", e);
@@ -153,7 +165,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    private void generateRefreshToken(User user) {
+    private String generateRefreshToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet jwtClaimsSetRefresh = new JWTClaimsSet.Builder()
                 .subject(user.getEmail())
@@ -167,6 +179,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         try{
             jwsObjectRefresh.sign(new MACSigner(SIGNER_KEY.getBytes()));
             redisTemplate.opsForValue().set("refreshToken: " + user.getEmail(), jwsObjectRefresh.serialize());
+            return jwsObjectRefresh.serialize();
         } catch (JOSEException ex) {
             log.error("Cannot create refreshToken", ex);
             throw new RuntimeException(ex);

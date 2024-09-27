@@ -48,8 +48,11 @@ public class AuthenticationComponent {
         var token = request.getToken();
         boolean isValid = true;
         StringBuilder content = new StringBuilder("");
+        StringBuilder emailToken = new StringBuilder("");
         try {
-            verifyToken(token);
+            var signedJWT = verifyToken(token);
+            var email = signedJWT.getJWTClaimsSet().getSubject();
+            emailToken.append(email);
         }
         catch (AuthenticatedException e) {
             isValid = false;
@@ -61,7 +64,7 @@ public class AuthenticationComponent {
             throw new ExpiredTokenException(e.getMessage());
         }
 
-        return IntrospectResponse.builder().valid(isValid).content(content.toString()).build();
+        return IntrospectResponse.builder().valid(isValid).content(content.toString()).email(emailToken.toString()).build();
     }
 
     public SignedJWT verifyToken(String token) throws JOSEException, ParseException {

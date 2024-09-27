@@ -45,6 +45,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 					.success(false)
 					.message("ExpiredToken")
 					.build();
+		} else if ("token_old".equals(error.getErrorCode())) {
+			apiResponse = ApiResponse.builder()
+					.success(false)
+					.message("tokenOld")
+					.build();
 		} else {
 			apiResponse = ApiResponse.builder()
 					.success(false)
