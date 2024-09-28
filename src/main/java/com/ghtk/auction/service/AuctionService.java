@@ -2,13 +2,16 @@ package com.ghtk.auction.service;
 
 
 import com.ghtk.auction.dto.request.auction.AuctionCreationRequest;
+import com.ghtk.auction.dto.request.auction.AuctionGetBidRequest;
 import com.ghtk.auction.dto.request.auction.AuctionUpdateStatusRequest;
+import com.ghtk.auction.dto.response.auction.AuctionBidResponse;
 import com.ghtk.auction.dto.response.auction.AuctionCreationResponse;
 import com.ghtk.auction.dto.response.auction.AuctionListResponse;
 import com.ghtk.auction.dto.response.auction.AuctionResponse;
 import com.ghtk.auction.dto.response.user.PageResponse;
 import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.UserAuction;
+import com.ghtk.auction.entity.UserAuctionHistory;
 import com.ghtk.auction.enums.AuctionStatus;
 import org.quartz.SchedulerException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -41,4 +44,6 @@ public interface AuctionService {
     PageResponse<AuctionListResponse> getAllAuctionByStatus(AuctionStatus auctionStatus, int pageNo, int pageSize);
 
     PageResponse<AuctionListResponse> getMyWon(Jwt jwt, int pageNo, int pageSize);
+
+    List<AuctionBidResponse> getBidByAuctionId(AuctionGetBidRequest request);
 }

@@ -1,7 +1,9 @@
 package com.ghtk.auction.service.impl;
 
 import com.ghtk.auction.dto.request.auction.AuctionCreationRequest;
+import com.ghtk.auction.dto.request.auction.AuctionGetBidRequest;
 import com.ghtk.auction.dto.request.auction.AuctionUpdateStatusRequest;
+import com.ghtk.auction.dto.response.auction.AuctionBidResponse;
 import com.ghtk.auction.dto.response.auction.AuctionCreationResponse;
 import com.ghtk.auction.dto.response.auction.AuctionListResponse;
 import com.ghtk.auction.dto.response.auction.AuctionResponse;
@@ -43,6 +45,7 @@ public class AuctionServiceImpl implements AuctionService {
 	final AuctionRepository auctionRepository;
 	final ProductRepository productRepository;
 	final UserAuctionRepository userAuctionRepository;
+	final UserAuctionHistoryRepository userAuctionHistoryRepository;
 	final AuctionMapper auctionMapper;
 	final UserRepository userRepository;
 	final TimeHistoryRepository timeHistoryRepository;
@@ -341,6 +344,11 @@ public class AuctionServiceImpl implements AuctionService {
 		pageAuctionResponse.setContent(auctions);
 
 		return pageAuctionResponse;
+	}
+
+	@Override
+	public List<AuctionBidResponse> getBidByAuctionId(AuctionGetBidRequest request) {
+		return userAuctionHistoryRepository.getBidAuction(request.getAuctionId(), request.getAuctionStatus());
 	}
 
 	private LocalDateTime convertToLocalDateTime(Timestamp timestamp) {
