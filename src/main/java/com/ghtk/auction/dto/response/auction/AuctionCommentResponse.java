@@ -7,15 +7,14 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
 @Data
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AuctionBidResponse {
+public class AuctionCommentResponse {
+    Long commentId;
     String userName;
-    Long auctionId;
-    Long userId;
-    Long bid;
+    String content;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     LocalDateTime createdAt;
 }

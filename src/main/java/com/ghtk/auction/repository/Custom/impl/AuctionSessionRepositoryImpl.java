@@ -202,8 +202,15 @@ public class AuctionSessionRepositoryImpl implements AuctionSessionRepository {
     @Override
     public List<CommentMessage> getComments(Long auctionId, CommentFilter filter) {
         List<Comment> comments;
-        LocalDateTime from = filter.getFrom();
-        LocalDateTime to = filter.getTo();
+        LocalDateTime from;
+        LocalDateTime to;
+        if(filter != null) {
+            from = filter.getFrom();
+            to = filter.getTo();
+        } else {
+            from = null;
+            to = null;
+        }
         if (from != null) {
             if (to == null) {
                 comments = commentRepository.findAllByAuctionIdAndCreatedAtAfter(auctionId, from);

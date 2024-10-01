@@ -172,8 +172,7 @@ public class AuctionController {
         @PathVariable("auctionId") Long auctionId, 
         CommentFilter filter,
         @AuthenticationPrincipal Jwt principal) {
-    Long userId = (Long) principal.getClaim("id");
-    return ApiResponse.success(auctionRealtimeService.getComments(userId, auctionId, filter));
+    return ApiResponse.success(auctionRealtimeService.getComments(principal, auctionId, filter));
   }
 	@GetMapping("/get-all-auction")
 	public ResponseEntity<ApiResponse<PageResponse<AuctionListResponse>>> getAllAuction(
@@ -199,5 +198,11 @@ public class AuctionController {
 
 		AuctionGetBidRequest request = AuctionGetBidRequest.builder().auctionStatus(status).auctionId(auctionId).build();
 		return ResponseEntity.ok(ApiResponse.success(auctionService.getBidByAuctionId(request)));
+	}
+
+	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/comments/{auctionId}")
+	public ResponseEntity<ApiResponse<List<AuctionCommentResponse>>> getCommentByAuctionId(@PathVariable("auctionId") Long auctionId) {
+		return ResponseEntity.ok(ApiResponse.success(auctionService.getComments(auctionId)));
 	}
 }

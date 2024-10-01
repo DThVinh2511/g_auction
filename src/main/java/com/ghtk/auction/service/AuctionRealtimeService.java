@@ -8,6 +8,7 @@ import com.ghtk.auction.dto.stomp.BidMessage;
 import com.ghtk.auction.dto.stomp.CommentMessage;
 import com.ghtk.auction.dto.stomp.NotifyMessage;
 import com.ghtk.auction.entity.Auction;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface AuctionRealtimeService {
     List<Auction> getJoinableNotis(Long userId);
@@ -27,7 +28,7 @@ public interface AuctionRealtimeService {
     void checkNotifying(Long userId, Long auctionId);
 
     BidMessage getCurrentPrice(Long userId, Long auctionId);
-    List<CommentMessage> getComments(Long userId, Long auctionId, CommentFilter filter);
+    List<CommentMessage> getComments(Jwt principal, Long auctionId, CommentFilter filter);
 
     BidMessage bid(Long userId, Long auctionId, Long bid);
     CommentMessage comment(Long userId, Long auctionId, String comment);

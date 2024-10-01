@@ -1,5 +1,6 @@
 package com.ghtk.auction.repository.Custom;
 
+import com.ghtk.auction.dto.response.auction.AuctionCommentResponse;
 import com.ghtk.auction.dto.response.auction.AuctionListResponse;
 import com.ghtk.auction.enums.AuctionStatus;
 import org.springframework.data.domain.Pageable;

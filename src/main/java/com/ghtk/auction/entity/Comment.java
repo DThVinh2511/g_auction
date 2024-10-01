@@ -1,5 +1,7 @@
 package com.ghtk.auction.entity;
 
+import com.ghtk.auction.dto.response.auction.AuctionBidResponse;
+import com.ghtk.auction.dto.response.auction.AuctionCommentResponse;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,6 +16,18 @@ import java.time.LocalDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "comment")
+@SqlResultSetMapping(
+    name = "CommentListProjectionMapping",
+    classes = @ConstructorResult(
+        targetClass = AuctionCommentResponse.class,
+        columns = {
+            @ColumnResult(name = "commentId", type = Long.class),
+            @ColumnResult(name = "userName", type = String.class),
+            @ColumnResult(name = "content", type = String.class),
+            @ColumnResult(name = "createdAt", type = LocalDateTime.class)
+        }
+    )
+)
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

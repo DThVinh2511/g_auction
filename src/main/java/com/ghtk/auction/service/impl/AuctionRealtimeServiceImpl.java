@@ -11,6 +11,7 @@ import com.ghtk.auction.dto.response.auction.AuctionJoinResponse;
 import com.ghtk.auction.enums.AuctionStatus;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.ghtk.auction.dto.stomp.BidMessage;
@@ -207,10 +208,11 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
   }
 
   @Override
-  public List<CommentMessage> getComments(Long userId, Long auctionId, CommentFilter filter) {
-    if (!isAuctionStarted(auctionId)) {
-      throw new ForbiddenException("Phien dau gia chua bat dau");
-    }
+  public List<CommentMessage> getComments(Jwt principal, Long auctionId, CommentFilter filter) {
+//    String role = principal.getClaim("scope");
+//    if (!isAuctionStarted(auctionId) && !role.equals("ROLE_ADMIN")) {
+//      throw new ForbiddenException("Phien dau gia chua bat dau");
+//    }
     return auctionSessionRepository.getComments(auctionId, filter);
   }
 	

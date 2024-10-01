@@ -4,11 +4,9 @@ package com.ghtk.auction.service;
 import com.ghtk.auction.dto.request.auction.AuctionCreationRequest;
 import com.ghtk.auction.dto.request.auction.AuctionGetBidRequest;
 import com.ghtk.auction.dto.request.auction.AuctionUpdateStatusRequest;
-import com.ghtk.auction.dto.response.auction.AuctionBidResponse;
-import com.ghtk.auction.dto.response.auction.AuctionCreationResponse;
-import com.ghtk.auction.dto.response.auction.AuctionListResponse;
-import com.ghtk.auction.dto.response.auction.AuctionResponse;
+import com.ghtk.auction.dto.response.auction.*;
 import com.ghtk.auction.dto.response.user.PageResponse;
+import com.ghtk.auction.dto.stomp.CommentMessage;
 import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.UserAuction;
 import com.ghtk.auction.entity.UserAuctionHistory;
@@ -46,4 +44,6 @@ public interface AuctionService {
     PageResponse<AuctionListResponse> getMyWon(Jwt jwt, int pageNo, int pageSize);
 
     List<AuctionBidResponse> getBidByAuctionId(AuctionGetBidRequest request);
+
+    List<AuctionCommentResponse> getComments(Long auctionId);
 }

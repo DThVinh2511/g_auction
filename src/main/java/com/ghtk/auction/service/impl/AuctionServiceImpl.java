@@ -3,11 +3,9 @@ package com.ghtk.auction.service.impl;
 import com.ghtk.auction.dto.request.auction.AuctionCreationRequest;
 import com.ghtk.auction.dto.request.auction.AuctionGetBidRequest;
 import com.ghtk.auction.dto.request.auction.AuctionUpdateStatusRequest;
-import com.ghtk.auction.dto.response.auction.AuctionBidResponse;
-import com.ghtk.auction.dto.response.auction.AuctionCreationResponse;
-import com.ghtk.auction.dto.response.auction.AuctionListResponse;
-import com.ghtk.auction.dto.response.auction.AuctionResponse;
+import com.ghtk.auction.dto.response.auction.*;
 import com.ghtk.auction.dto.response.user.PageResponse;
+import com.ghtk.auction.dto.stomp.CommentMessage;
 import com.ghtk.auction.entity.*;
 import com.ghtk.auction.enums.AuctionStatus;
 import com.ghtk.auction.exception.AlreadyExistsException;
@@ -46,10 +44,10 @@ public class AuctionServiceImpl implements AuctionService {
 	final ProductRepository productRepository;
 	final UserAuctionRepository userAuctionRepository;
 	final UserAuctionHistoryRepository userAuctionHistoryRepository;
+	final CommentRepository commentRepository;
 	final AuctionMapper auctionMapper;
 	final UserRepository userRepository;
 	final TimeHistoryRepository timeHistoryRepository;
-	final Scheduler scheduler;
 	final JobSchedulerService jobSchedulerService;
 
   @Value("${auction.schedule.regis_duration:2880}")
@@ -349,6 +347,11 @@ public class AuctionServiceImpl implements AuctionService {
 	@Override
 	public List<AuctionBidResponse> getBidByAuctionId(AuctionGetBidRequest request) {
 		return userAuctionHistoryRepository.getBidAuction(request.getAuctionId(), request.getAuctionStatus());
+	}
+
+	@Override
+	public List<AuctionCommentResponse> getComments(Long auctionId) {
+		return commentRepository.getCommentByAuctionId(auctionId);
 	}
 
 	private LocalDateTime convertToLocalDateTime(Timestamp timestamp) {

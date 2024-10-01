@@ -11,6 +11,7 @@ import com.ghtk.auction.entity.BlackListToken;
 import com.ghtk.auction.entity.User;
 import com.ghtk.auction.exception.AlreadyExistsException;
 import com.ghtk.auction.exception.AuthenticatedException;
+import com.ghtk.auction.exception.ExpiredTokenException;
 import com.ghtk.auction.repository.BlackListTokenRepository;
 import com.ghtk.auction.repository.UserRepository;
 import com.ghtk.auction.service.AuthenticationService;
@@ -94,13 +95,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
         var signToken = authenticationComponent.verifyToken(request.getToken());
-
         LocalDateTime expiryTime = (signToken.getJWTClaimsSet().getExpirationTime())
               .toInstant()
               .atZone(ZoneId.systemDefault())
               .toLocalDateTime();
-        
-        
+        String email = signToken.getJWTClaimsSet().getSubject();
+        redisTemplate.delete("refreshToken: " + email);
+        redisTemplate.delete("accessToken: " + email);
         BlackListToken blackListToken =
               BlackListToken.builder()
                     .token(request.getToken())

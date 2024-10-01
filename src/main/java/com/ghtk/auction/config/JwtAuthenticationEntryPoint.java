@@ -48,7 +48,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 		} else if ("token_old".equals(error.getErrorCode())) {
 			apiResponse = ApiResponse.builder()
 					.success(false)
-					.message("tokenOld")
+					.message("TokenOld")
 					.build();
 		} else {
 			apiResponse = ApiResponse.builder()
