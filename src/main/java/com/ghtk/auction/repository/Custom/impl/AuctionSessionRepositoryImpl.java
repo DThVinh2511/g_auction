@@ -1,5 +1,9 @@
 package com.ghtk.auction.repository.Custom.impl;
 
+import com.ghtk.auction.dto.stomp.BidMessageResponse;
+import com.ghtk.auction.dto.stomp.NotifyMessage;
+import com.ghtk.auction.entity.Notifycation;
+import com.ghtk.auction.repository.NotifycationRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
@@ -26,6 +30,7 @@ public class AuctionSessionRepositoryImpl implements AuctionSessionRepository {
     private final RedisTemplateFactory redisTemplateFactory;
     private final RedisTemplate<String, String> redisTemplate;
     private final CommentRepository commentRepository;
+    private final NotifycationRepository notifycationRepository;
     
 
     @Override
@@ -194,11 +199,6 @@ public class AuctionSessionRepositoryImpl implements AuctionSessionRepository {
         String lastBidKey = getLastBidKey(auctionId);
         redisTemplate.delete(lastBidKey);
     }
-
-    @Override
-    public List<CommentMessage> getComments(Long auctionId) {
-        return getComments(auctionId, new CommentFilter());
-    }
     @Override
     public List<CommentMessage> getComments(Long auctionId, CommentFilter filter) {
         List<Comment> comments;
@@ -232,6 +232,18 @@ public class AuctionSessionRepositoryImpl implements AuctionSessionRepository {
             .toList();
     }
     @Override
+    public List<NotifyMessage> getNotifies(Long auctionId) {
+        List<Notifycation> notifies = notifycationRepository.findAllByAuctionId(auctionId);
+        return notifies.stream()
+                .map(notify -> {
+                    return NotifyMessage.builder()
+                            .content(notify.getMessage())
+                            .createdAt(notify.getCreatedAt())
+                            .build();
+                })
+                .toList();
+    }
+    @Override
     public void addComment(Long auctionId, CommentMessage comment) {
         Comment entity = Comment.builder()
             .auctionId(auctionId)
@@ -246,6 +258,18 @@ public class AuctionSessionRepositoryImpl implements AuctionSessionRepository {
         // no-op
     }
 
+    @Override
+    public List<BidMessageResponse> getBidsInAuction(Long auctionId) {
+        String key = getBidsKey(auctionId);
+        var template = redisTemplateFactory.get(BidMessage.class);
+        List<BidMessage> tmp = template.opsForList().range(key, 0, -1);
+        return tmp.stream().map(bid -> {
+            return BidMessageResponse.builder()
+                    .bid(bid.getBid())
+                    .createdAt(bid.getCreatedAt())
+                    .userId(bid.getUserId()).build();
+        }).toList();
+    }
 
 
     private String getUserJoinableKey(Long userId) {

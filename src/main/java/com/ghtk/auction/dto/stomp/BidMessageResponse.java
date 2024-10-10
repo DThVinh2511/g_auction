@@ -1,23 +1,19 @@
 package com.ghtk.auction.dto.stomp;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-
-import lombok.AccessLevel;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BidMessage {
-  Long userId;
-  Long bid;
-  LocalDateTime createdAt;
+public class BidMessageResponse {
+    Long userId;
+    Long bid;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
+    LocalDateTime createdAt;
 }

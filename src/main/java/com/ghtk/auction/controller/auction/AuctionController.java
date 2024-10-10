@@ -7,7 +7,10 @@ import com.ghtk.auction.dto.request.comment.CommentFilter;
 import com.ghtk.auction.dto.response.ApiResponse;
 import com.ghtk.auction.dto.response.auction.*;
 import com.ghtk.auction.dto.response.user.PageResponse;
+import com.ghtk.auction.dto.stomp.BidMessage;
+import com.ghtk.auction.dto.stomp.BidMessageResponse;
 import com.ghtk.auction.dto.stomp.CommentMessage;
+import com.ghtk.auction.dto.stomp.NotifyMessage;
 import com.ghtk.auction.entity.Auction;
 import com.ghtk.auction.entity.UserAuction;
 import com.ghtk.auction.entity.UserAuctionHistory;
@@ -39,7 +42,7 @@ public class AuctionController {
 	final AuctionService auctionService;
 	final JobSchedulerService jobSchedulerService;
 	final UpdateAuctionStatus updateAuctionStatus;
-  final AuctionRealtimeService auctionRealtimeService;
+  	final AuctionRealtimeService auctionRealtimeService;
 	
 	@PostMapping("/")
 	public ResponseEntity<ApiResponse<AuctionCreationResponse>> createAuction(
@@ -115,37 +118,38 @@ public class AuctionController {
   @GetMapping("/active")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<List<AuctionResponse>> getRegisActiveAuctions(
-    @AuthenticationPrincipal Jwt jwt
+	@AuthenticationPrincipal Jwt jwt
   ) {
-    return ApiResponse.success(auctionService.getRegisActiveAuctions(jwt));
+	return ApiResponse.success(auctionService.getRegisActiveAuctions(jwt));
   }
 
   @GetMapping("/joinable")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<List<Auction>> getJoinableAuctions(
-      @AuthenticationPrincipal Jwt jwt) {
-    Long userId = (Long) jwt.getClaims().get("id");
-    return ApiResponse.success(auctionRealtimeService.getJoinableNotis(userId));
+	  @AuthenticationPrincipal Jwt jwt) {
+	Long userId = (Long) jwt.getClaims().get("id");
+	return ApiResponse.success(auctionRealtimeService.getJoinableNotis(userId));
   }
 
   @PostMapping("/{auctionId}/join")
   public ApiResponse<AuctionJoinResponse> joinAuction(
-      @PathVariable Long auctionId,
-      @AuthenticationPrincipal Jwt jwt
+	  @PathVariable Long auctionId,
+	  @AuthenticationPrincipal Jwt jwt
   ) {
-    Long userId = (Long) jwt.getClaims().get("id");
-    var response = auctionRealtimeService.joinAuction(userId, auctionId);
-    return ApiResponse.success(response);
+	Long userId = (Long) jwt.getClaims().get("id");
+	String role = jwt.getClaim("scope");
+	var response = auctionRealtimeService.joinAuction(userId, auctionId, role);
+	return ApiResponse.success(response);
   }
 
   @PostMapping("/{auctionId}/leave")
   public ApiResponse<Void> leaveAuction(
-      @PathVariable Long auctionId,
-      @AuthenticationPrincipal Jwt jwt
+	  @PathVariable Long auctionId,
+	  @AuthenticationPrincipal Jwt jwt
   ) {
-    Long userId = (Long) jwt.getClaims().get("id");
-    auctionRealtimeService.leaveAuction(userId, auctionId);
-    return ApiResponse.success(null);
+	Long userId = (Long) jwt.getClaims().get("id");
+	auctionRealtimeService.leaveAuction(userId, auctionId);
+	return ApiResponse.success(null);
   }
 
   // @GetMapping("/{id}/current-price")
@@ -165,15 +169,32 @@ public class AuctionController {
   // ) {
   //   return ApiResponse.success(auctionService.getBids(jwt, auctionId, filter));
   // }
-  
+
   @GetMapping("/{auctionId}/comments")
   @PreAuthorize("@auctionComponent.canParticipateAuction(#auctionId, principal)")
   public ApiResponse<List<CommentMessage>> getComments(
-        @PathVariable("auctionId") Long auctionId, 
-        CommentFilter filter,
-        @AuthenticationPrincipal Jwt principal) {
-    return ApiResponse.success(auctionRealtimeService.getComments(principal, auctionId, filter));
+		@PathVariable("auctionId") Long auctionId,
+		CommentFilter filter,
+		@AuthenticationPrincipal Jwt principal) {
+	return ApiResponse.success(auctionRealtimeService.getComments(auctionId, filter));
   }
+
+	@GetMapping("/{auctionId}/notifycations")
+	@PreAuthorize("@auctionComponent.canParticipateAuction(#auctionId, principal)")
+	public ApiResponse<List<NotifyMessage>> getNotifies(
+			@PathVariable("auctionId") Long auctionId,
+			@AuthenticationPrincipal Jwt principal) {
+		return ApiResponse.success(auctionRealtimeService.getNotifies(auctionId));
+	}
+
+	@GetMapping("/{auctionId}/bids")
+	@PreAuthorize("@auctionComponent.canParticipateAuction(#auctionId, principal)")
+	public ApiResponse<List<BidMessageResponse>> getBids(
+			@PathVariable("auctionId") Long auctionId,
+			@AuthenticationPrincipal Jwt principal) {
+		return ApiResponse.success(auctionRealtimeService.getBids(auctionId));
+	}
+
 	@GetMapping("/get-all-auction")
 	public ResponseEntity<ApiResponse<PageResponse<AuctionListResponse>>> getAllAuction(
 			@RequestParam(value = "pageNo", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
@@ -181,7 +202,7 @@ public class AuctionController {
 	){
 		return ResponseEntity.ok(ApiResponse.success(auctionService.getAllList(pageNo, pageSize)));
 	}
-	
+
 	@GetMapping("/get-all-auction-by-status")
 	public ResponseEntity<ApiResponse<PageResponse<AuctionListResponse>>> getAllAuctionByStatus(
 			@RequestParam(value = "pageNo", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,

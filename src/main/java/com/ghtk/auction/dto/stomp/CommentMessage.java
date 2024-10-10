@@ -19,6 +19,6 @@ public class CommentMessage {
     Long commentId;
     Long userId;
     String content;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     LocalDateTime createdAt;
 }

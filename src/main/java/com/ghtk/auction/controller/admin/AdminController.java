@@ -5,6 +5,7 @@ import com.ghtk.auction.dto.request.auction.AuctionUpdateStatusRequest;
 import com.ghtk.auction.dto.response.ApiResponse;
 import com.ghtk.auction.dto.stomp.NotifyMessage;
 import com.ghtk.auction.enums.AuctionStatus;
+import com.ghtk.auction.service.NotifycationService;
 import com.ghtk.auction.service.StompService;
 import com.ghtk.auction.service.AuctionRealtimeService;
 import com.ghtk.auction.service.AuctionService;
@@ -26,6 +27,7 @@ public class AdminController {
   final AuctionService auctionService;
   final AuctionRealtimeService auctionRealtimeService;
   final StompService stompService;
+  final NotifycationService notifycationService;
 	
   @PostMapping("/error")
   @PreAuthorize("hasRole('ADMIN')")
@@ -64,17 +66,21 @@ public class AdminController {
     return ApiResponse.success(null);
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/notify")
   public ApiResponse<Void> publishNotification(@RequestBody String message) {
     stompService.sendGlobalNotification(new NotifyMessage(message, LocalDateTime.now()));
     return ApiResponse.ok("ok");
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/auctions/{auctionId}/notify")
   public ApiResponse<Void> publishNotification(
     @RequestBody String message,
     @PathVariable Long auctionId) {
-    stompService.broadcastAuctionNotification(auctionId, new NotifyMessage(message, LocalDateTime.now()));
+    NotifyMessage notify = new NotifyMessage(message, LocalDateTime.now());
+    notifycationService.addNotifycation(auctionId, notify);
+    stompService.broadcastAuctionNotification(auctionId, notify);
     return ApiResponse.ok("ok");
   }
 }

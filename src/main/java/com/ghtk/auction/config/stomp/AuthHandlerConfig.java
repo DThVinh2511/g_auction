@@ -66,7 +66,10 @@ public class AuthHandlerConfig {
         (headers, payload) -> {
             long userId = (Long) headers.getHeader("userId"); 
             long auctionId = (Long) headers.getHeader("auctionId");
-            auctionRealtimeService.checkControlJoin(userId, auctionId);
+            String role = (String) headers.getHeader("userRole");
+            if (!role.equalsIgnoreCase("admin")) {
+                auctionRealtimeService.checkControlJoin(userId, auctionId);
+            }
         });
   } 
 
@@ -77,7 +80,10 @@ public class AuthHandlerConfig {
         (headers, payload) -> {
             long userId = (Long) headers.getHeader("userId"); 
             long auctionId = (Long) headers.getHeader("auctionId");
-            auctionRealtimeService.checkNotifJoin(userId, auctionId);
+            String role = (String) headers.getHeader("userRole");
+            if (!role.equalsIgnoreCase("admin")) {
+                auctionRealtimeService.checkNotifJoin(userId, auctionId);
+            }
         });
   } 
 
@@ -89,7 +95,10 @@ public class AuthHandlerConfig {
             System.out.println("subscribeAuctionBidHandler");
             long userId = (Long) headers.getHeader("userId"); 
             long auctionId = (Long) headers.getHeader("auctionId");
-            auctionRealtimeService.checkBidJoin(userId, auctionId);
+            String role = (String) headers.getHeader("userRole");
+            if (!role.equalsIgnoreCase("admin")) {
+                auctionRealtimeService.checkBidJoin(userId, auctionId);
+            }
         });
   }
 
@@ -100,7 +109,10 @@ public class AuthHandlerConfig {
         (headers, payload) -> {
             long userId = (Long) headers.getHeader("userId"); 
             long auctionId = (Long) headers.getHeader("auctionId");
-            auctionRealtimeService.checkCommentJoin(userId, auctionId);
+            String role = (String) headers.getHeader("userRole");
+            if (!role.equalsIgnoreCase("admin")) {
+                auctionRealtimeService.checkCommentJoin(userId, auctionId);
+            }
         });
   }
 

@@ -3,11 +3,13 @@ package com.ghtk.auction.repository.Custom;
 import com.ghtk.auction.dto.redis.AuctionRoom;
 import com.ghtk.auction.dto.request.comment.CommentFilter;
 import com.ghtk.auction.dto.stomp.BidMessage;
+import com.ghtk.auction.dto.stomp.BidMessageResponse;
 import com.ghtk.auction.dto.stomp.CommentMessage;
 
 import java.util.List;
 import java.util.Optional;
 
+import com.ghtk.auction.dto.stomp.NotifyMessage;
 import org.springframework.data.util.Pair;
 
 import java.time.LocalDateTime;
@@ -30,14 +32,15 @@ public interface AuctionSessionRepository {
     void deleteJoin(Long auctionId, Long userId);
     void deleteAllJoinByUser(Long auctionId);
     void deleteAllJoinByAuction(Long auctionId);
-    
     Optional<BidMessage> getLastBid(Long auctionId);
     List<BidMessage> getBids(Long auctionId);
     void addBid(Long auctionId, BidMessage auctionBid);
     void deleteAllBids(Long auctionId);
-
-    List<CommentMessage> getComments(Long auctionId);
     List<CommentMessage> getComments(Long auctionId, CommentFilter filter);
+
+    List<NotifyMessage> getNotifies(Long auctionId);
     void addComment(Long auctionId, CommentMessage comment);
     void deleteAllComments(Long auctionId);
+
+    List<BidMessageResponse> getBidsInAuction(Long auctionId);
 }

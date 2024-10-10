@@ -69,6 +69,10 @@ public class AuctionComponent {
             return false;
         }
         Long userId = (Long)principal.getClaims().get("id");
+        String role = principal.getClaim("scope");
+        if(role.equals("ROLE_ADMIN")) {
+            return true;
+        }
         Optional<AuctionRoom> room = auctionSessionRepository.getAuctionRoom(auctionId);
         if (room.isPresent()) {
             return auctionSessionRepository.existsJoinable(auctionId, userId);

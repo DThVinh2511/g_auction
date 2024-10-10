@@ -1,6 +1,5 @@
 package com.ghtk.auction.entity;
 
-import com.ghtk.auction.dto.response.auction.AuctionBidResponse;
 import com.ghtk.auction.dto.response.auction.AuctionCommentResponse;
 import jakarta.persistence.*;
 import lombok.*;

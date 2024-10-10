@@ -36,6 +36,12 @@ public class CustomHandshakeInterceptor implements HandshakeInterceptor {
         .map(token -> jwtDecoder.decode(token.substring(7)))
         .get();
       attributes.put("userId", jwt.getClaims().get("id"));
+      String role = (String) jwt.getClaims().get("scope");
+      if(role.equals("ROLE_ADMIN")) {
+        attributes.put("role", "admin");
+      } else {
+        attributes.put("role", "user");
+      }
       attributes.put("userRole", ((String) jwt.getClaims().get("scope")).replace("ROLE_", ""));
       return true;
     } catch (Exception e) {

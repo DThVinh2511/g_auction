@@ -8,7 +8,10 @@ import com.ghtk.auction.dto.redis.AuctionRoom;
 import com.ghtk.auction.dto.request.comment.CommentFilter;
 import com.ghtk.auction.dto.response.auction.AuctionJoinResponse;
 
+import com.ghtk.auction.dto.stomp.BidMessageResponse;
+import com.ghtk.auction.entity.*;
 import com.ghtk.auction.enums.AuctionStatus;
+import com.ghtk.auction.enums.UserRole;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -17,12 +20,6 @@ import org.springframework.stereotype.Service;
 import com.ghtk.auction.dto.stomp.BidMessage;
 import com.ghtk.auction.dto.stomp.CommentMessage;
 import com.ghtk.auction.dto.stomp.NotifyMessage;
-import com.ghtk.auction.entity.Auction;
-import com.ghtk.auction.entity.Comment;
-import com.ghtk.auction.entity.Product;
-import com.ghtk.auction.entity.TimeHistory;
-import com.ghtk.auction.entity.UserAuction;
-import com.ghtk.auction.entity.UserAuctionHistory;
 import com.ghtk.auction.event.AuctionEndEvent;
 import com.ghtk.auction.event.AuctionRoomOpenEvent;
 import com.ghtk.auction.event.AuctionStartEvent;
@@ -52,171 +49,191 @@ import lombok.AccessLevel;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
-  final UserRepository userRepository;
-  final UserAuctionRepository userAuctionRepository;
-  final TimeHistoryRepository timeHistoryRepository;
-  final AuctionRepository auctionRepository;
-  final ProductRepository productRepository;
-  final UserAuctionHistoryRepository userAuctionHistoryRepository;
-  final CommentRepository commentRepository;
+    final UserRepository userRepository;
+    final UserAuctionRepository userAuctionRepository;
+    final TimeHistoryRepository timeHistoryRepository;
+    final AuctionRepository auctionRepository;
+    final ProductRepository productRepository;
+    final UserAuctionHistoryRepository userAuctionHistoryRepository;
+    final CommentRepository commentRepository;
 
-  final AuctionSessionRepository auctionSessionRepository;
+    final AuctionSessionRepository auctionSessionRepository;
 
-  final ApplicationEventPublisher eventPublisher;
-  
-  @Override
-  public List<Auction> getJoinableNotis(Long userId) {
-    return auctionSessionRepository.getJoinableByUser(userId).stream()
-        .map(auctionId -> auctionRepository.findById(auctionId).orElseThrow(
-            () -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
-        ))
-        .toList();
-  }
+    final ApplicationEventPublisher eventPublisher;
 
-  @Override
-  public void checkControlJoin(Long userId, Long auctionId) {
-    if (auctionSessionRepository.getAuctionRoom(auctionId).isEmpty()) {
-      throw new ForbiddenException("phong dau gia chua mo");
+    @Override
+    public List<Auction> getJoinableNotis(Long userId) {
+      return auctionSessionRepository.getJoinableByUser(userId).stream()
+          .map(auctionId -> auctionRepository.findById(auctionId).orElseThrow(
+              () -> new NotFoundException("Khong tim thay phien dau gia nao trung voi Id")
+          ))
+          .toList();
     }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
-      throw new ForbiddenException("Khong co quyen tham gia dau gia");
-    }
-  }
 
-  @Override
-  public void checkNotifJoin(Long userId, Long auctionId) {
-    if (auctionSessionRepository.getAuctionRoom(auctionId).isEmpty()) {
-      throw new ForbiddenException("phong dau gia chua mo");
-    }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
-      throw new ForbiddenException("Khong co quyen tham gia dau gia");
-    }
-  }
-  
-  @Override
-  public void checkBidJoin(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
-      throw new ForbiddenException("dau gia chua bat dau");
-    }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
-      throw new ForbiddenException("Khong co quyen tham gia dau gia");
-    }
-  }
-  
-  @Override
-  public void checkCommentJoin(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
-      throw new ForbiddenException("dau gia chua bat day");
-    }
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
-      throw new ForbiddenException("Khong co quyen tham gia dau gia");
-    }
-  }
-
-	@Override
-	public AuctionJoinResponse joinAuction(Long userId, Long auctionId) {
-    AuctionRoom room = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
-        () -> new NotFoundException("phong dau gia chua mo")
-    );
-    if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
-      throw new ForbiddenException("Khong co quyen tham gia dau gia");
-    }
-    if (auctionSessionRepository.getJoin(auctionId, userId).isPresent()) {
-      throw new AlreadyExistsException("da tham gia dau gia");
-    }
-    auctionSessionRepository.addJoin(auctionId, userId);
-    return new AuctionJoinResponse(room.isStarted());
-	}
-
-  @Override
-  public void leaveAuction(Long userId, Long auctionId) {
-    UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
-    LocalDateTime joinTime = auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(
-        () -> new ForbiddenException("Chua tham gia dau gia")
-    );
-    LocalDateTime leaveTime = LocalDateTime.now();
-    auctionSessionRepository.deleteJoin(auctionId, userId);
-    TimeHistory entry = TimeHistory.builder()
-        .userAuction(ua)
-        .joinTime(joinTime)
-        .outTime(leaveTime)
-        .build();
-    timeHistoryRepository.save(entry);
-  }
-
-  @Override
-  public void leaveAllAuctions(Long userId) {
-    LocalDateTime leaveTime = LocalDateTime.now();
-
-    List<Pair<Long, LocalDateTime>> joins = auctionSessionRepository.getJoinsByUser(userId);
-    auctionSessionRepository.deleteAllJoinByUser(userId);
-
-    List<TimeHistory> entries = new ArrayList<>();
-    joins.forEach(pair -> {
-      try {
-        Long auctionId = pair.getFirst();
-        LocalDateTime joinTime = pair.getSecond();
-        UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
-        TimeHistory entry = TimeHistory.builder()
-            .userAuction(ua)
-            .joinTime(joinTime)
-            .outTime(leaveTime)
-            .build();
-        entries.add(entry);
-      } catch (Exception e) {
-        log.error("Loi khi roi phien dau gia", e);
+    @Override
+    public void checkControlJoin(Long userId, Long auctionId) {
+      if (auctionSessionRepository.getAuctionRoom(auctionId).isEmpty()) {
+        throw new ForbiddenException("phong dau gia chua mo");
       }
-    });
-    timeHistoryRepository.saveAll(entries);
-  }
-
-  @Override
-  public void checkBidding(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
-      throw new ForbiddenException("Phien dau gia chua bat dau");
+      if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+        throw new ForbiddenException("Khong co quyen tham gia dau gia");
+      }
     }
-    auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(() ->
-        new ForbiddenException("Chua tham gia dau gia")
-    );
-  }
 
-  @Override
-  public void checkCommenting(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
+    @Override
+    public void checkNotifJoin(Long userId, Long auctionId) {
+      if (auctionSessionRepository.getAuctionRoom(auctionId).isEmpty()) {
+        throw new ForbiddenException("phong dau gia chua mo");
+      }
+      if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+        throw new ForbiddenException("Khong co quyen tham gia dau gia");
+      }
+    }
+
+    @Override
+    public void checkBidJoin(Long userId, Long auctionId) {
+      if (!isAuctionStarted(auctionId)) {
+        throw new ForbiddenException("dau gia chua bat dau");
+      }
+      if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+        throw new ForbiddenException("Khong co quyen tham gia dau gia");
+      }
+    }
+
+    @Override
+    public void checkCommentJoin(Long userId, Long auctionId) {
+      if (!isAuctionStarted(auctionId)) {
+        throw new ForbiddenException("dau gia chua bat day");
+      }
+      if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+        throw new ForbiddenException("Khong co quyen tham gia dau gia");
+      }
+    }
+
+      @Override
+      public AuctionJoinResponse joinAuction(Long userId, Long auctionId, String role) {
+        if(!role.equals("ROLE_ADMIN")) {
+          AuctionRoom room = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
+                  () -> new NotFoundException("phong dau gia chua mo")
+          );
+
+          if (!auctionSessionRepository.existsJoinable(auctionId, userId)) {
+            throw new ForbiddenException("Khong co quyen tham gia dau gia");
+          }
+          if (auctionSessionRepository.getJoin(auctionId, userId).isPresent()) {
+            throw new AlreadyExistsException("da tham gia dau gia");
+          }
+          auctionSessionRepository.addJoin(auctionId, userId);
+          return new AuctionJoinResponse(room.isStarted());
+        } else {
+          return new AuctionJoinResponse(true);
+        }
+      }
+
+    @Override
+    public void leaveAuction(Long userId, Long auctionId) {
+      UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
+      LocalDateTime joinTime = auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(
+          () -> new ForbiddenException("Chua tham gia dau gia")
+      );
+      LocalDateTime leaveTime = LocalDateTime.now();
+      auctionSessionRepository.deleteJoin(auctionId, userId);
+      TimeHistory entry = TimeHistory.builder()
+          .userAuction(ua)
+          .joinTime(joinTime)
+          .outTime(leaveTime)
+          .build();
+      timeHistoryRepository.save(entry);
+    }
+
+    @Override
+    public void leaveAllAuctions(Long userId) {
+      LocalDateTime leaveTime = LocalDateTime.now();
+
+      List<Pair<Long, LocalDateTime>> joins = auctionSessionRepository.getJoinsByUser(userId);
+      auctionSessionRepository.deleteAllJoinByUser(userId);
+
+      List<TimeHistory> entries = new ArrayList<>();
+      joins.forEach(pair -> {
+        try {
+          Long auctionId = pair.getFirst();
+          LocalDateTime joinTime = pair.getSecond();
+          UserAuction ua = userAuctionRepository.findByUserIdAndAuctionId(userId, auctionId);
+          TimeHistory entry = TimeHistory.builder()
+              .userAuction(ua)
+              .joinTime(joinTime)
+              .outTime(leaveTime)
+              .build();
+          entries.add(entry);
+        } catch (Exception e) {
+          log.error("Loi khi roi phien dau gia", e);
+        }
+      });
+      timeHistoryRepository.saveAll(entries);
+    }
+
+    @Override
+    public void checkBidding(Long userId, Long auctionId) {
+      if (!isAuctionStarted(auctionId)) {
         throw new ForbiddenException("Phien dau gia chua bat dau");
+      }
+      auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(() ->
+          new ForbiddenException("Chua tham gia dau gia")
+      );
     }
-    auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(() ->
-        new ForbiddenException("Chua tham gia dau gia")
-    );
-  }
 
-  @Override
-  public void checkNotifying(Long userId, Long auctionId) {
-    
-  }
-
-  @Override
-  public BidMessage getCurrentPrice(Long userId, Long auctionId) {
-    if (!isAuctionStarted(auctionId)) {
-      throw new ForbiddenException("Phien dau gia chua bat dau");
+    @Override
+    public void checkCommenting(Long userId, Long auctionId) {
+      if (!isAuctionStarted(auctionId)) {
+          throw new ForbiddenException("Phien dau gia chua bat dau");
+      }
+      auctionSessionRepository.getJoin(auctionId, userId).orElseThrow(() ->
+          new ForbiddenException("Chua tham gia dau gia")
+      );
     }
-    BidMessage result = auctionSessionRepository.getLastBid(auctionId)
-        .orElseGet(() -> {
-            return new BidMessage(0L, 0L, null);
-        });
-    return result;
-  }
 
-  @Override
-  public List<CommentMessage> getComments(Jwt principal, Long auctionId, CommentFilter filter) {
-//    String role = principal.getClaim("scope");
-//    if (!isAuctionStarted(auctionId) && !role.equals("ROLE_ADMIN")) {
-//      throw new ForbiddenException("Phien dau gia chua bat dau");
-//    }
-    return auctionSessionRepository.getComments(auctionId, filter);
-  }
-	
-	@Override
+    @Override
+    public void checkNotifying(Long userId, Long auctionId) {
+
+    }
+
+    @Override
+    public BidMessage getCurrentPrice(Long userId, Long auctionId) {
+      if (!isAuctionStarted(auctionId)) {
+        throw new ForbiddenException("Phien dau gia chua bat dau");
+      }
+      BidMessage result = auctionSessionRepository.getLastBid(auctionId)
+          .orElseGet(() -> {
+              return new BidMessage(0L, 0L, null);
+          });
+      return result;
+    }
+
+    @Override
+    public List<CommentMessage> getComments(Long auctionId, CommentFilter filter) {
+        if (!isAuctionStarted(auctionId)) {
+            throw new ForbiddenException("Phien dau gia chua bat dau");
+        }
+        return auctionSessionRepository.getComments(auctionId, filter);
+    }
+
+    @Override
+    public List<NotifyMessage> getNotifies(Long auctionId) {
+        if (!isAuctionStarted(auctionId)) {
+            throw new ForbiddenException("Phien dau gia chua bat dau");
+        }
+        return auctionSessionRepository.getNotifies(auctionId);
+    }
+
+    @Override
+    public List<BidMessageResponse> getBids(Long auctionId) {
+        if (!isAuctionStarted(auctionId)) {
+            throw new ForbiddenException("Phien dau gia chua bat dau");
+        }
+        return auctionSessionRepository.getBidsInAuction(auctionId);
+    }
+
+    @Override
 	public synchronized BidMessage bid(Long userId, Long auctionId, Long bid) {
     AuctionRoom info = auctionSessionRepository.getAuctionRoom(auctionId).orElseThrow(
         () -> new ForbiddenException("Phien dau gia chua bat dau")
