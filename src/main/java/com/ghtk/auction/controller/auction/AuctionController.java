@@ -176,7 +176,8 @@ public class AuctionController {
 		@PathVariable("auctionId") Long auctionId,
 		CommentFilter filter,
 		@AuthenticationPrincipal Jwt principal) {
-	return ApiResponse.success(auctionRealtimeService.getComments(auctionId, filter));
+	  String role = principal.getClaim("scope");
+	return ApiResponse.success(auctionRealtimeService.getComments(auctionId, filter, role));
   }
 
 	@GetMapping("/{auctionId}/notifycations")
@@ -184,7 +185,8 @@ public class AuctionController {
 	public ApiResponse<List<NotifyMessage>> getNotifies(
 			@PathVariable("auctionId") Long auctionId,
 			@AuthenticationPrincipal Jwt principal) {
-		return ApiResponse.success(auctionRealtimeService.getNotifies(auctionId));
+		String role = principal.getClaim("scope");
+		return ApiResponse.success(auctionRealtimeService.getNotifies(auctionId, role));
 	}
 
 	@GetMapping("/{auctionId}/bids")
@@ -192,7 +194,8 @@ public class AuctionController {
 	public ApiResponse<List<BidMessageResponse>> getBids(
 			@PathVariable("auctionId") Long auctionId,
 			@AuthenticationPrincipal Jwt principal) {
-		return ApiResponse.success(auctionRealtimeService.getBids(auctionId));
+		String role = principal.getClaim("scope");
+		return ApiResponse.success(auctionRealtimeService.getBids(auctionId, role));
 	}
 
 	@GetMapping("/get-all-auction")

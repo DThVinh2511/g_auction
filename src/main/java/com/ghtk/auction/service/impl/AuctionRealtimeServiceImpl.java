@@ -210,24 +210,24 @@ public class AuctionRealtimeServiceImpl implements AuctionRealtimeService {
     }
 
     @Override
-    public List<CommentMessage> getComments(Long auctionId, CommentFilter filter) {
-        if (!isAuctionStarted(auctionId)) {
+    public List<CommentMessage> getComments(Long auctionId, CommentFilter filter, String role) {
+        if (!isAuctionStarted(auctionId) && role.equals("ROLE_USER")) {
             throw new ForbiddenException("Phien dau gia chua bat dau");
         }
         return auctionSessionRepository.getComments(auctionId, filter);
     }
 
     @Override
-    public List<NotifyMessage> getNotifies(Long auctionId) {
-        if (!isAuctionStarted(auctionId)) {
+    public List<NotifyMessage> getNotifies(Long auctionId, String role) {
+        if (!isAuctionStarted(auctionId) && role.equals("ROLE_USER")) {
             throw new ForbiddenException("Phien dau gia chua bat dau");
         }
         return auctionSessionRepository.getNotifies(auctionId);
     }
 
     @Override
-    public List<BidMessageResponse> getBids(Long auctionId) {
-        if (!isAuctionStarted(auctionId)) {
+    public List<BidMessageResponse> getBids(Long auctionId, String role) {
+        if (!isAuctionStarted(auctionId) && role.equals("ROLE_USER")) {
             throw new ForbiddenException("Phien dau gia chua bat dau");
         }
         return auctionSessionRepository.getBidsInAuction(auctionId);

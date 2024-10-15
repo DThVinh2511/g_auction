@@ -29,7 +29,7 @@ public interface AuctionRealtimeService {
     void checkNotifying(Long userId, Long auctionId);
 
     BidMessage getCurrentPrice(Long userId, Long auctionId);
-    List<CommentMessage> getComments(Long auctionId, CommentFilter filter);
+    List<CommentMessage> getComments(Long auctionId, CommentFilter filter, String role);
 
     BidMessage bid(Long userId, Long auctionId, Long bid);
     CommentMessage comment(Long userId, Long auctionId, String comment);
@@ -41,7 +41,7 @@ public interface AuctionRealtimeService {
     void startAuction(Long auctionId);
     void endAuction(Long auctionId);
 
-    List<NotifyMessage> getNotifies(Long auctionId);
+    List<NotifyMessage> getNotifies(Long auctionI, String role);
 
-    List<BidMessageResponse> getBids(Long auctionId);
+    List<BidMessageResponse> getBids(Long auctionId, String role);
 }
